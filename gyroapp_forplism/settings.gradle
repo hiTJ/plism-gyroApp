@@ -13,4 +13,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "TestForAccelerometer"
-include ':app'
+include ':ClientApp'
+include ':serverapp'
