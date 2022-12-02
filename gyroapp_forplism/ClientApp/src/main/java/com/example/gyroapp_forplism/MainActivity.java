@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private SensorManager sensorManager;
     private TextView textView, textInfo;
     private GyroMessageQueue gQueue;
+    private boolean isStopped;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -34,7 +35,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         gQueue = new GyroMessageQueue();
 
         SocketThread sThread = new SocketThread(gQueue);
-        sThread.start();
 
 
         textInfo = findViewById(R.id.text_info);
@@ -42,11 +42,41 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // Get an instance of the TextView
         textView = findViewById(R.id.text_view);
 
-        Button button = this.findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener(){
+        Button connectButton = this.findViewById(R.id.ConnectButton);
+        Button startButton = this.findViewById(R.id.StartButton);
+        Button stopButton = this.findViewById(R.id.StopButton);
+        connectButton.setEnabled(true);
+        startButton.setEnabled(false);
+        stopButton.setEnabled(false);
+
+        connectButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                sThread.toggleRunning();
+                sThread.start();
+                startButton.setEnabled(true);
+                connectButton.setEnabled(false);
+            }
+        });
+        startButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if(sThread.isAlive() && sThread.isConnected()) {
+                    sThread.toggleRunning();
+                    isStopped = true;
+                    stopButton.setEnabled(true);
+                    startButton.setEnabled(false);
+                }
+            }
+        });
+        stopButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if(sThread.isAlive() && sThread.isConnected()) {
+                    sThread.toggleRunning();
+                    isStopped = false;
+                    startButton.setEnabled(true);
+                    stopButton.setEnabled(false);
+                }
             }
         });
 
@@ -91,7 +121,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             //showInfo(event);
             GyroData gyroData = new GyroData(sensorX, sensorY, sensorZ);
-            gQueue.add(gyroData);
+            if(!isStopped){
+                gQueue.add(gyroData);
+            }
         }
 
     }

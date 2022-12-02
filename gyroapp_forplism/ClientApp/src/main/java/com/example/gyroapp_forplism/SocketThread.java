@@ -8,18 +8,20 @@ import java.nio.ByteOrder;
 
 public class SocketThread extends Thread{
     private GyroMessageQueue gyroQueue;
-    private boolean running = true;
+    private boolean isRunning = false;
+    private boolean isConnected = false;
     public SocketThread(GyroMessageQueue gQueue){
         gyroQueue = gQueue;
     }
     public void run(){
         try (Socket client = new Socket()) {
             // ソケットに接続するため、接続情報を設定する。
-            //InetSocketAddress ipep = new InetSocketAddress("10.0.2.2", 9999);
+            InetSocketAddress ipep = new InetSocketAddress("10.0.2.2", 9999);
             //InetSocketAddress ipep = new InetSocketAddress("126,0,29,26", 10000);
-            InetSocketAddress ipep = new InetSocketAddress("192.168.3.50", 10000);
+            //InetSocketAddress ipep = new InetSocketAddress("192.168.3.50", 10000);
             // ソケット接続
             client.connect(ipep);
+            isConnected = true;
             // ソケット接続が完了すればinputstreamとoutputstreamを受け取る。
             try (OutputStream sender = client.getOutputStream(); InputStream receiver = client.getInputStream()) {
                 // メッセージはfor文を通って10回にメッセージを送信する。
@@ -28,7 +30,7 @@ public class SocketThread extends Thread{
                         if (gyroQueue.isEmpty()) {
                             SocketThread.sleep(10);
                         }else{
-                            if (!running){
+                            if (!isRunning){
                                 gyroQueue.poll();
                                 continue;
                             }
@@ -70,11 +72,16 @@ public class SocketThread extends Thread{
         } catch (Throwable e) {
             // エラーが発生する時コンソールに出力する。
             e.printStackTrace();
+        } finally {
+            isConnected = false;
         }
     }
 
+    public boolean isConnected(){
+        return isConnected;
+    }
     public void toggleRunning(){
-        running = !running;
+        isRunning = !isRunning;
     }
 }
 
