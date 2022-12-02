@@ -14,26 +14,39 @@ import java.nio.ByteOrder;
 public class SocketThread extends Thread{
     private MessageQueue messageQueue;
     private boolean running = true;
+    private MessageQueueListenerInterface messageQueuelistener = null;
     public SocketThread(){
         messageQueue = new MessageQueue();
     }
     public void run(){
         try (ServerSocket server = new ServerSocket()) {
-            InetSocketAddress ipep = new InetSocketAddress("", 10000);
+            InetSocketAddress ipep = new InetSocketAddress(10000);
             // ソケット接続
             server.bind(ipep);
-            // ソケット接続が完了すればinputstreamとoutputstreamを受け取る。
-            try (Socket socket = server.accept()) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                // 入力を受け取ったら、大文字に変換の上で応答
-                String data;
-                while((data = reader.readLine()) != null) {
+            while(true) {
+                try (Socket socket = server.accept()) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    String data = reader.readLine();
                     messageQueue.add(data);
                 }
             }
         }catch (IOException e){
             e.printStackTrace();
         }
+    }
+    public String pollMessage(){
+        if(messageQueue.isEmpty()){
+            return "";
+        }else{
+            return messageQueue.poll();
+        }
+    }
+
+    public void setMessageQueueListener(MessageQueueListenerInterface listener){
+        this.messageQueuelistener = listener;
+    }
+    public void removeMessageQueueListener(){
+        this.messageQueuelistener = null;
     }
 }
 
