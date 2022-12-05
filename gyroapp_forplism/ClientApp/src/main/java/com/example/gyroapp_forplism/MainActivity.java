@@ -1,5 +1,6 @@
 package com.example.gyroapp_forplism;//package your.package.name;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
@@ -13,16 +14,25 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.gyroapp_forplism.R;
-
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     private SensorManager sensorManager;
     private TextView textView, textInfo;
-    private GyroMessageQueue gQueue;
+    private DeltaAngleMessageQueue gQueue;
     private boolean isStopped;
+    private AngleCalculator angleCalculator;
+    /** 地磁気行列 */
+    private float[] mMagneticValues;
+    /** 加速度行列 */
+    private float[] mAccelerometerValues;
+    /** X軸の回転角度 */
+    private int mPitchX;
+    /** Y軸の回転角度 */
+    private int mRollY;
+    /** Z軸の回転角度(方位角) */
+    private int mAzimuthZ;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -32,7 +42,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // Get an instance of the SensorManager
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        gQueue = new GyroMessageQueue();
+        gQueue = new DeltaAngleMessageQueue();
+        angleCalculator = new AngleCalculator();
 
         SocketThread sThread = new SocketThread(gQueue);
 
@@ -87,9 +98,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onResume();
         // Listenerの登録
         Sensor gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        Sensor mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-        if(gyro != null){
-            sensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_UI);
+        if(gyro != null && mag != null && accel != null){
+            //sensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_UI);
+            sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_UI);
+            sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_UI);
         }
         else{
             String ns = "No Support";
@@ -106,31 +121,72 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        Log.d("debug","onSensorChanged");
+    private void doGyroAction(@NonNull SensorEvent event){
+        float sensorX = event.values[0];
+        float sensorY = event.values[1];
+        float sensorZ = event.values[2];
 
-        if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-            float sensorX = event.values[0];
-            float sensorY = event.values[1];
-            float sensorZ = event.values[2];
+        String strTmp = String.format(Locale.US, "Gyroscope\n " +
+                " X: %f\n Y: %f\n Z: %f",sensorX, sensorY, sensorZ);
+        textView.setText(strTmp);
 
-            String strTmp = String.format(Locale.US, "Gyroscope\n " +
-                    " X: %f\n Y: %f\n Z: %f",sensorX, sensorY, sensorZ);
-            textView.setText(strTmp);
-
-            //showInfo(event);
-            GyroData gyroData = new GyroData(sensorX, sensorY, sensorZ);
-            if(!isStopped){
-                gQueue.add(gyroData);
-            }
+        //showInfo(event);
+        GyroData gyroData = new GyroData(sensorX, sensorY, sensorZ);
+        if(!isStopped){
+            gQueue.add(gyroData);
         }
+    }
+    private void doAccelAction(@NonNull SensorEvent event){
+        this.angleCalculator.setAccelerometer(event.values.clone());
+        this.angleCalculator.calcAngle();
+        DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
+        if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
+            return;
+        }
+
+        showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
+
+    }
+    private void doMagneticAction(@NonNull SensorEvent event){
+        this.angleCalculator.setMagneticValue(event.values.clone());
+        this.angleCalculator.calcAngle();
+        DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
+        if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
+            return;
+        }
+        showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
 
     }
 
+    @Override
+    public void onSensorChanged(@NonNull SensorEvent event) {
+        Log.d("debug","onSensorChanged");
 
+        switch (event.sensor.getType()){
+            case Sensor.TYPE_GYROSCOPE:
+                //doGyroAction(event);
+                break;
+            case Sensor.TYPE_ACCELEROMETER:
+                doAccelAction(event);
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                doMagneticAction(event);
+                break;
+            default:
+                return;
+        }
+        if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+        }
+    }
+
+
+    private void showAngleInfo(int pitchX, int rollY, int azimuthZ){
+        String strTmp = String.format(Locale.US, "deltaAngle\n " +
+                " Pitch: %d\n Roll: %d\n Azimuth: %d",pitchX, rollY, azimuthZ);
+        textView.setText(strTmp);
+    }
     // センサーの各種情報を表示する
-    private void showInfo(SensorEvent event){
+    private void showInfo(@NonNull SensorEvent event){
         // センサー名
         StringBuffer info = new StringBuffer("Name: ");
         info.append(event.sensor.getName());

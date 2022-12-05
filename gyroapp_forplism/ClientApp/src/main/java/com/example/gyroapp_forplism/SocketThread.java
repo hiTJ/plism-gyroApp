@@ -7,18 +7,18 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class SocketThread extends Thread{
-    private GyroMessageQueue gyroQueue;
+    private DeltaAngleMessageQueue gyroQueue;
     private boolean isRunning = false;
     private boolean isConnected = false;
-    public SocketThread(GyroMessageQueue gQueue){
+    public SocketThread(DeltaAngleMessageQueue gQueue){
         gyroQueue = gQueue;
     }
     public void run(){
         try (Socket client = new Socket()) {
             // ソケットに接続するため、接続情報を設定する。
-            InetSocketAddress ipep = new InetSocketAddress("10.0.2.2", 9999);
+            //InetSocketAddress ipep = new InetSocketAddress("10.0.2.2", 9999);
             //InetSocketAddress ipep = new InetSocketAddress("126,0,29,26", 10000);
-            //InetSocketAddress ipep = new InetSocketAddress("192.168.3.50", 10000);
+            InetSocketAddress ipep = new InetSocketAddress("192.168.3.50", 10000);
             // ソケット接続
             client.connect(ipep);
             isConnected = true;
