@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Contract;
 import java.util.ArrayList;
 
 public class AngleCalculator {
-    private static final int MAXSIZE_ANGLE_DATA = 3;
+    private static final int MAXSIZE_ANGLE_DATA = 10;
     private static final int MATRIX_SIZE = 16;
     private static final int DIMENSION = 3;
     private ArrayList<AngleData> angleDataList;
@@ -29,15 +29,19 @@ public class AngleCalculator {
     public  DeltaAngleData getDeltaAngle(){
         return this.deltaAngleData;
     }
+    public  AngleData getCurrentAngleData(){
+        return this.currentAngleData;
+    }
     private DeltaAngleData calcDeltaAngle(){
         this.deltaAngleData = new DeltaAngleData(currentAngleData, previousAngleData);
 
         return deltaAngleData;
     }
 
-    private int radianToDegrees(float angrad) {
+    private float radianToDegrees(float angrad) {
         double deg = Math.toDegrees(angrad);
-        return (int) Math.floor(angrad >= 0 ? deg : 360 + deg);
+        return  (float)Math.round(deg);
+        //return  (float)Math.floor(angrad >= 0 ? deg : 360 + deg);
     }
 
     public void setAccelerometer(float[] values){
@@ -81,19 +85,16 @@ public class AngleCalculator {
             float pitchX = radianToDegrees(orientationValues[1]);
             float rollY = radianToDegrees(orientationValues[2]);
             AngleData angleData = new AngleData(pitchX, rollY, azimuthZ);
-            if(angleDataList.size() > MAXSIZE_ANGLE_DATA){
+            if (angleDataList.size() >= MAXSIZE_ANGLE_DATA) {
                 angleDataList.remove(0);
             }
             angleDataList.add(angleData);
             currentAngleData = getAverageAngleData();
-            if(!DeltaAngleData.isEqualData(currentAngleData, previousAngleData)){
-                Log.d("DEBUG", "calcAngle: Different data is stored between current and previous!!");
 
-                Log.d("DEBUG", "Current: " + currentAngleData.azimuthZ + ", " + currentAngleData.rollY + ", " + currentAngleData.pitchX);
-                Log.d("DEBUG", "Current: " + previousAngleData.azimuthZ + ", " + previousAngleData.rollY + ", " + previousAngleData.pitchX);
-                calcDeltaAngle();
-                DeltaAngleData.cloneObject(previousAngleData, currentAngleData);
-            }
+            Log.d("DEBUG", "Current: " + currentAngleData.azimuthZ + ", " + currentAngleData.rollY + ", " + currentAngleData.pitchX);
+            Log.d("DEBUG", "Current: " + previousAngleData.azimuthZ + ", " + previousAngleData.rollY + ", " + previousAngleData.pitchX);
+            calcDeltaAngle();
+            DeltaAngleData.cloneObject(previousAngleData, currentAngleData);
         }
     }
 }

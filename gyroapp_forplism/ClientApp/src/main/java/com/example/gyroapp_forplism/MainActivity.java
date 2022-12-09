@@ -144,8 +144,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return;
         }
 
+        AngleData currentData = this.angleCalculator.getCurrentAngleData();
         showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
-
+        //showAngleInfo((int)currentData.pitchX, (int)currentData.rollY, (int)currentData.azimuthZ);
     }
     private void doMagneticAction(@NonNull SensorEvent event){
         this.angleCalculator.setMagneticValue(event.values.clone());
@@ -154,7 +155,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
             return;
         }
+        AngleData currentData = this.angleCalculator.getCurrentAngleData();
         showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
+        //showAngleInfo((int)currentData.pitchX, (int)currentData.rollY, (int)currentData.azimuthZ);
 
     }
 
@@ -180,9 +183,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
-    private void showAngleInfo(int pitchX, int rollY, int azimuthZ){
+    private void showAngleInfo(float pitchX, float rollY, float azimuthZ){
         String strTmp = String.format(Locale.US, "deltaAngle\n " +
-                " Pitch: %d\n Roll: %d\n Azimuth: %d",pitchX, rollY, azimuthZ);
+                " Pitch: %f\n Roll: %f\n Azimuth: %f",pitchX, rollY, azimuthZ);
         textView.setText(strTmp);
     }
     // センサーの各種情報を表示する
