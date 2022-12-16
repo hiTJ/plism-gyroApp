@@ -1,6 +1,7 @@
 package com.example.gyroapp_forplism;
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -9,17 +10,16 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class SocketThread extends Thread{
-    private DeltaAngleMessageQueue gyroQueue;
+    private DeltaAngleMessageQueue deltaAngleMessageQueue;
     private boolean isRunning = false;
     private boolean isConnected = false;
     public SocketThread(DeltaAngleMessageQueue gQueue){
-        gyroQueue = gQueue;
+        deltaAngleMessageQueue = gQueue;
     }
     public void run(){
         try (Socket client = new Socket()) {
             // ソケットに接続するため、接続情報を設定する。
             //InetSocketAddress ipep = new InetSocketAddress("10.0.2.2", 9999);
-            //InetSocketAddress ipep = new InetSocketAddress("126,0,29,26", 10000);
             InetSocketAddress ipep = new InetSocketAddress("192.168.3.50", 10000);
             // ソケット接続
             client.connect(ipep);
@@ -29,20 +29,33 @@ public class SocketThread extends Thread{
                 // メッセージはfor文を通って10回にメッセージを送信する。
                 while (true) {
                     while(true) {
-                        if (gyroQueue.isEmpty()) {
+                        if (!isConnected){
+                            deltaAngleMessageQueue.clear();
+                            Log.d("DEBUG", "Dispose this thread by yourself.");
+                            return;
+                        }
+                        if (deltaAngleMessageQueue.isEmpty()) {
                             SocketThread.sleep(10);
                         }else{
-                            if (!isConnected){
-                                Log.d("DEBUG", "Dispose this thread by yourself.");
-                                return;
+                            if(isRunning) {
+                                break;
                             }
-                            break;
                         }
                     }
                     // 送信するメッセージを作成する。
-                    String msg = gyroQueue.poll().message;
+                    DeltaAngleData deltaAngleData = deltaAngleMessageQueue.poll();
                     // stringをbyte配列に変換する。
-                    byte[] data = msg.getBytes();
+                    //byte[] dataX = floatToByteArray(deltaAngleData.deltaPitchX);
+                    //byte[] dataY = floatToByteArray(deltaAngleData.deltaRollY);
+                    //byte[] dataZ = floatToByteArray(deltaAngleData.deltaAzimuthZ);
+                    byte dataX = (byte)((int)deltaAngleData.deltaPitchX);
+                    byte dataY = (byte)((int)deltaAngleData.deltaRollY);
+                    byte dataZ = (byte)((int)deltaAngleData.deltaAzimuthZ);
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    outputStream.write(dataX);
+                    outputStream.write(dataY);
+                    outputStream.write(dataZ);
+                    byte[] data = outputStream.toByteArray();
                     // ByteBufferを通ってデータサイズをbyteタイプに変換する。
                     ByteBuffer b = ByteBuffer.allocate(4);
                     // byteフォマートはlittleエンディアンだ。
@@ -83,8 +96,18 @@ public class SocketThread extends Thread{
         return isConnected;
     }
     public void setConnected(boolean isConnected){ this.isConnected = isConnected; }
-    public void toggleRunning(){
-        isRunning = !isRunning;
+    public void setRunning(boolean isRunning){
+        this.isRunning = isRunning;
+    }
+
+    //Utils
+    public static byte[] floatToByteArray(float value) {
+        int intBits =  Float.floatToIntBits(value);
+        return new byte[] {
+                (byte) (intBits >> 24),
+                (byte) (intBits >> 16),
+                (byte) (intBits >> 8),
+                (byte) (intBits) };
     }
 }
 

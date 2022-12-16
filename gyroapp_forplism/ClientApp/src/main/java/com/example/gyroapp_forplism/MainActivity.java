@@ -20,20 +20,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private SensorManager sensorManager;
     private TextView textView, textInfo;
-    private GyroMessageQueue gQueue;
+    private DeltaAngleMessageQueue deltaAngleMessageQueue;
     SocketThread sThread;
-    private boolean isStopped;
     private AngleCalculator angleCalculator;
-    /** 地磁気行列 */
-    private float[] mMagneticValues;
-    /** 加速度行列 */
-    private float[] mAccelerometerValues;
-    /** X軸の回転角度 */
-    private int mPitchX;
-    /** Y軸の回転角度 */
-    private int mRollY;
-    /** Z軸の回転角度(方位角) */
-    private int mAzimuthZ;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -43,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // Get an instance of the SensorManager
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        gQueue = new DeltaAngleMessageQueue();
+        deltaAngleMessageQueue = new DeltaAngleMessageQueue();
         angleCalculator = new AngleCalculator();
 
         textInfo = findViewById(R.id.text_info);
@@ -63,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         connectButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                sThread = new SocketThread(gQueue);
+                sThread = new SocketThread(deltaAngleMessageQueue);
                 sThread.start();
                 startButton.setEnabled(true);
                 disconnectButton.setEnabled(true);
@@ -82,15 +71,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     }
                     break;
                 }
-                connectButton.setEnabled(false);
+                connectButton.setEnabled(true);
             }
         });
         startButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 if(sThread.isAlive() && sThread.isConnected()) {
-                    sThread.toggleRunning();
-                    isStopped = true;
+                    sThread.setRunning(true);
                     stopButton.setEnabled(true);
                     startButton.setEnabled(false);
                 }
@@ -100,8 +88,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
                 if(sThread.isAlive() && sThread.isConnected()) {
-                    sThread.toggleRunning();
-                    isStopped = false;
+                    sThread.setRunning(false);
                     startButton.setEnabled(true);
                     stopButton.setEnabled(false);
                 }
@@ -149,9 +136,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         //showInfo(event);
         GyroData gyroData = new GyroData(sensorX, sensorY, sensorZ);
-        if(!isStopped){
-            gQueue.add(gyroData);
-        }
+        //TODO Gyro値を使用するならば改めてqueue追加の処理を入れる
     }
     private void doAccelAction(@NonNull SensorEvent event){
         this.angleCalculator.setAccelerometer(event.values.clone());
@@ -160,9 +145,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
             return;
         }
-
-        AngleData currentData = this.angleCalculator.getCurrentAngleData();
+        //AngleData currentData = this.angleCalculator.getCurrentAngleData();
         showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
+        this.deltaAngleMessageQueue.add(deltaAngleData);
         //showAngleInfo((int)currentData.pitchX, (int)currentData.rollY, (int)currentData.azimuthZ);
     }
     private void doMagneticAction(@NonNull SensorEvent event){
@@ -172,8 +157,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
             return;
         }
-        AngleData currentData = this.angleCalculator.getCurrentAngleData();
+        //AngleData currentData = this.angleCalculator.getCurrentAngleData();
         showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
+        this.deltaAngleMessageQueue.add(deltaAngleData);
         //showAngleInfo((int)currentData.pitchX, (int)currentData.rollY, (int)currentData.azimuthZ);
 
     }
