@@ -1,4 +1,6 @@
 package com.example.gyroapp_forplism;
+import android.util.Log;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -30,9 +32,9 @@ public class SocketThread extends Thread{
                         if (gyroQueue.isEmpty()) {
                             SocketThread.sleep(10);
                         }else{
-                            if (!isRunning){
-                                gyroQueue.poll();
-                                continue;
+                            if (!isConnected){
+                                Log.d("DEBUG", "Dispose this thread by yourself.");
+                                return;
                             }
                             break;
                         }
@@ -80,6 +82,7 @@ public class SocketThread extends Thread{
     public boolean isConnected(){
         return isConnected;
     }
+    public void setConnected(boolean isConnected){ this.isConnected = isConnected; }
     public void toggleRunning(){
         isRunning = !isRunning;
     }
