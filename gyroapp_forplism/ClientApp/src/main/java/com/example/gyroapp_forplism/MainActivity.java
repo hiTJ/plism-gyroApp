@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private SensorManager sensorManager;
     private TextView textView, textInfo;
     private GyroMessageQueue gQueue;
+    SocketThread sThread;
     private boolean isStopped;
 
     @SuppressLint("MissingInflatedId")
@@ -34,26 +35,42 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         gQueue = new GyroMessageQueue();
 
-        SocketThread sThread = new SocketThread(gQueue);
-
-
         textInfo = findViewById(R.id.text_info);
 
         // Get an instance of the TextView
         textView = findViewById(R.id.text_view);
 
         Button connectButton = this.findViewById(R.id.ConnectButton);
+        Button disconnectButton = this.findViewById(R.id.DisconnectButton);
         Button startButton = this.findViewById(R.id.StartButton);
         Button stopButton = this.findViewById(R.id.StopButton);
         connectButton.setEnabled(true);
+        disconnectButton.setEnabled(false);
         startButton.setEnabled(false);
         stopButton.setEnabled(false);
 
         connectButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
+                sThread = new SocketThread(gQueue);
                 sThread.start();
                 startButton.setEnabled(true);
+                disconnectButton.setEnabled(true);
+                connectButton.setEnabled(false);
+            }
+        });
+        disconnectButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                sThread.setConnected(false);
+                startButton.setEnabled(false);
+                disconnectButton.setEnabled(false);
+                while(true){
+                    if(sThread == null || !sThread.isAlive()){
+                        continue;
+                    }
+                    break;
+                }
                 connectButton.setEnabled(false);
             }
         });

@@ -24,11 +24,25 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <EditText
+        android:id="@+id/editTextTextPersonName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="IP Address" />
+
     <Button
         android:id="@+id/ConnectButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/ConnectButton" />
+
+    <Button
+        android:id="@+id/DisconnectButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Disconnect" />
 
     <Button
         android:id="@+id/StartButton"
