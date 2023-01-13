@@ -22,8 +22,8 @@ public class AngleCalculator {
 
     public AngleCalculator(){
         angleDataList = new ArrayList<AngleData>();
-        currentAngleData = new AngleData(0,0,0);
-        previousAngleData = new AngleData(0,0,0);
+        currentAngleData = new AngleData(0,0,0,0);
+        previousAngleData = new AngleData(0,0,0,0);
         deltaAngleData = new DeltaAngleData(0,0,0);
     }
     public  DeltaAngleData getDeltaAngle(){
@@ -67,7 +67,7 @@ public class AngleCalculator {
         x = x / dataSize;
         y = y / dataSize;
         z = z / dataSize;
-        return new AngleData(x, y, z);
+        return new AngleData(0, x, y, z);
     }
     
     public void calcAngle() {
@@ -84,7 +84,7 @@ public class AngleCalculator {
             float azimuthZ = radianToDegrees(orientationValues[0]);
             float pitchX = radianToDegrees(orientationValues[1]);
             float rollY = radianToDegrees(orientationValues[2]);
-            AngleData angleData = new AngleData(pitchX, rollY, azimuthZ);
+            AngleData angleData = new AngleData(0, pitchX, rollY, azimuthZ);
             if (angleDataList.size() >= MAXSIZE_ANGLE_DATA) {
                 angleDataList.remove(0);
             }

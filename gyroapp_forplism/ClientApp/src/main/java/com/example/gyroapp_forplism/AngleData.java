@@ -6,16 +6,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AngleData implements Cloneable{
-    float pitchX;
-    float rollY;
-    float azimuthZ;
+    int direction;
+    int pitchX;
+    int rollY;
+    int azimuthZ;
 
-    public AngleData(float pitchX, float rollY, float azimuthZ){
-        this.pitchX = pitchX;
-        this.rollY = rollY;
-        this.azimuthZ = azimuthZ;
+    public AngleData(int direction, float pitchX, float rollY, float azimuthZ){
+        this.direction = direction;
+        this.pitchX = (int)pitchX;
+        this.rollY = (int)rollY;
+        this.azimuthZ = (int)azimuthZ;
     }
     public AngleData(@NonNull AngleData angleData){
+        this.direction = angleData.direction;
         this.pitchX = angleData.pitchX;
         this.rollY = angleData.rollY;
         this.azimuthZ = angleData.azimuthZ;

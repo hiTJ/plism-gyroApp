@@ -20,7 +20,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private SensorManager sensorManager;
     private TextView textView, textInfo;
-    private DeltaAngleMessageQueue deltaAngleMessageQueue;
+    private AngleDataMessageQueue angleDataMessageQueue;
     SocketThread sThread;
     private AngleCalculator angleCalculator;
 
@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // Get an instance of the SensorManager
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        deltaAngleMessageQueue = new DeltaAngleMessageQueue();
+        angleDataMessageQueue = new AngleDataMessageQueue();
         angleCalculator = new AngleCalculator();
 
         textInfo = findViewById(R.id.text_info);
@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         connectButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                sThread = new SocketThread(deltaAngleMessageQueue);
+                sThread = new SocketThread(angleDataMessageQueue);
                 sThread.start();
                 startButton.setEnabled(true);
                 disconnectButton.setEnabled(true);
@@ -141,26 +141,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void doAccelAction(@NonNull SensorEvent event){
         this.angleCalculator.setAccelerometer(event.values.clone());
         this.angleCalculator.calcAngle();
-        DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
-        if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
-            return;
-        }
-        //AngleData currentData = this.angleCalculator.getCurrentAngleData();
-        showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
-        this.deltaAngleMessageQueue.add(deltaAngleData);
-        //showAngleInfo((int)currentData.pitchX, (int)currentData.rollY, (int)currentData.azimuthZ);
+        //DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
+        //if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
+        //    return;
+        //}
+        AngleData angleData = this.angleCalculator.getCurrentAngleData();
+        showAngleInfo((int)angleData.pitchX, (int)angleData.rollY, (int)angleData.azimuthZ);
+        this.angleDataMessageQueue.add(angleData);
     }
     private void doMagneticAction(@NonNull SensorEvent event){
         this.angleCalculator.setMagneticValue(event.values.clone());
         this.angleCalculator.calcAngle();
-        DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
-        if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
-            return;
-        }
-        //AngleData currentData = this.angleCalculator.getCurrentAngleData();
-        showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
-        this.deltaAngleMessageQueue.add(deltaAngleData);
-        //showAngleInfo((int)currentData.pitchX, (int)currentData.rollY, (int)currentData.azimuthZ);
+        //DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
+        //if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
+        //    return;
+        //}
+        AngleData angleData = this.angleCalculator.getCurrentAngleData();
+        showAngleInfo((int)angleData.pitchX, (int)angleData.rollY, (int)angleData.azimuthZ);
+        this.angleDataMessageQueue.add(angleData);
 
     }
 

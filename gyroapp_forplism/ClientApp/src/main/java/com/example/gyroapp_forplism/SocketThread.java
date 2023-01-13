@@ -1,6 +1,10 @@
 package com.example.gyroapp_forplism;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import org.jetbrains.annotations.Contract;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,13 +12,26 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class SocketThread extends Thread{
-    private DeltaAngleMessageQueue deltaAngleMessageQueue;
+    private AngleDataMessageQueue angleDataMessageQueue;
     private boolean isRunning = false;
     private boolean isConnected = false;
-    public SocketThread(DeltaAngleMessageQueue gQueue){
-        deltaAngleMessageQueue = gQueue;
+    public SocketThread(AngleDataMessageQueue gQueue){
+        angleDataMessageQueue = gQueue;
+    }
+    @NonNull
+    @Contract(pure = true)
+    private byte[] CastBytesToWORD(byte[] bytes){
+        byte[] word = new byte[2];
+        for (int i = 0; i < word.length; i++)
+        {
+            word[word.length-i-1] = bytes[bytes.length-i-1];
+        }
+        return word;
     }
     public void run(){
         try (Socket client = new Socket()) {
@@ -30,11 +47,11 @@ public class SocketThread extends Thread{
                 while (true) {
                     while(true) {
                         if (!isConnected){
-                            deltaAngleMessageQueue.clear();
+                            angleDataMessageQueue.clear();
                             Log.d("DEBUG", "Dispose this thread by yourself.");
                             return;
                         }
-                        if (deltaAngleMessageQueue.isEmpty()) {
+                        if (angleDataMessageQueue.isEmpty()) {
                             SocketThread.sleep(10);
                         }else{
                             if(isRunning) {
@@ -43,18 +60,27 @@ public class SocketThread extends Thread{
                         }
                     }
                     // 送信するメッセージを作成する。
-                    DeltaAngleData deltaAngleData = deltaAngleMessageQueue.poll();
+                    AngleData angleData = angleDataMessageQueue.poll();
+                    angleDataMessageQueue.clear();
                     // stringをbyte配列に変換する。
                     //byte[] dataX = floatToByteArray(deltaAngleData.deltaPitchX);
                     //byte[] dataY = floatToByteArray(deltaAngleData.deltaRollY);
                     //byte[] dataZ = floatToByteArray(deltaAngleData.deltaAzimuthZ);
-                    byte dataX = (byte)((int)deltaAngleData.deltaPitchX);
-                    byte dataY = (byte)((int)deltaAngleData.deltaRollY);
-                    byte dataZ = (byte)((int)deltaAngleData.deltaAzimuthZ);
+                    byte direction = (byte)((int)angleData.direction);
+                    byte[] dataX = ByteBuffer.allocate(4).putInt(angleData.pitchX).array();
+                    byte[] dataY = ByteBuffer.allocate(4).putInt(angleData.rollY).array();
+                    byte[] dataZ = ByteBuffer.allocate(4).putInt(angleData.azimuthZ).array();
+                    //byte dataX = (byte)((int)angleData.pitchX);
+                    //byte dataY = (byte)((int)angleData.rollY);
+                    //byte dataZ = (byte)((int)angleData.azimuthZ);
+                    byte[] x = CastBytesToWORD(dataX);
+                    byte[] y = CastBytesToWORD(dataY);
+                    byte[] z = CastBytesToWORD(dataZ);
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    outputStream.write(dataX);
-                    outputStream.write(dataY);
-                    outputStream.write(dataZ);
+                    outputStream.write(direction);
+                    outputStream.write(x);
+                    outputStream.write(y);
+                    outputStream.write(z);
                     byte[] data = outputStream.toByteArray();
                     // ByteBufferを通ってデータサイズをbyteタイプに変換する。
                     ByteBuffer b = ByteBuffer.allocate(4);
