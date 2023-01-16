@@ -13,9 +13,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class SocketThread extends Thread{
     private AngleDataMessageQueue angleDataMessageQueue;
@@ -28,7 +25,7 @@ public class SocketThread extends Thread{
     }
     @NonNull
     @Contract(pure = true)
-    private byte[] CastBytesToWORD(byte[] bytes){
+    private byte[] castBytesToWORD(byte[] bytes){
         byte[] word = new byte[2];
         for (int i = 0; i < word.length; i++)
         {
@@ -84,9 +81,9 @@ public class SocketThread extends Thread{
                     //byte dataX = (byte)((int)angleData.pitchX);
                     //byte dataY = (byte)((int)angleData.rollY);
                     //byte dataZ = (byte)((int)angleData.azimuthZ);
-                    byte[] x = CastBytesToWORD(dataX);
-                    byte[] y = CastBytesToWORD(dataY);
-                    byte[] z = CastBytesToWORD(dataZ);
+                    byte[] x = castBytesToWORD(dataX);
+                    byte[] y = castBytesToWORD(dataY);
+                    byte[] z = castBytesToWORD(dataZ);
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     outputStream.write(direction);
                     outputStream.write(x);
@@ -114,11 +111,6 @@ public class SocketThread extends Thread{
                     data = new byte[length];
                     // データを受け取る。
                     receiver.read(data, 0, length);
-
-                    // byteタイプの???をstringタイプに変換する。
-                    //msg = new String(data, "UTF-8");
-                    // コンソールに出力する。
-                    //System.out.println(msg);
                 }
             }
         } catch (Throwable e) {

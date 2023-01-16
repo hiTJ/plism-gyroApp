@@ -1,5 +1,4 @@
 package com.example.serverapp;
-import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,11 +7,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 
 public class SocketThread extends Thread{
     private AngleDataMessageQueue angleDataMessageQueue;
-    private AngleData angleData;
     private boolean running = true;
     private MessageQueueListenerInterface messageQueuelistener = null;
     public SocketThread(){
@@ -24,8 +21,6 @@ public class SocketThread extends Thread{
             // ソケット接続
             server.bind(ipep);
             try (Socket socket = server.accept()) {
-                //InputStreamReader inputStream = new InputStreamReader(socket.getInputStream());
-                //BufferedReader reader = new BufferedReader(inputStream);
                 try (OutputStream sender = socket.getOutputStream(); InputStream receiver = socket.getInputStream()) {
                     while (true) {
                         byte[] lengthData = new byte[4];
