@@ -46,11 +46,11 @@ public class MainActivity extends Activity implements MessageQueueListenerInterf
             public void run() {
                 while (true) {
                     try {
-                        String message = sThread.pollMessage();
-                        if (message != "") {
+                        AngleData angleData = sThread.pollAngleData();
+                        if (angleData != null) {
                             runOnUiThread(new Runnable() {
                                 public void run() {
-                                    textView.setText(message);
+                                    textView.setText(angleData.pitchX + ", " + angleData.rollY + ", " + angleData.azimuthZ);
                                 }
                             });
                         }
@@ -84,8 +84,8 @@ public class MainActivity extends Activity implements MessageQueueListenerInterf
 
     @Override
     public void onQueuedMessage(){
-        String message = sThread.pollMessage();
-        textInfo.setText((message));
+        AngleData angleData = sThread.pollAngleData();
+        textInfo.setText(angleData.pitchX + ", " + angleData.rollY + ", " + angleData.azimuthZ);
     }
 
 }
