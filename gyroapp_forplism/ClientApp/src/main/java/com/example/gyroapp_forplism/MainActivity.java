@@ -19,7 +19,7 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     private SensorManager sensorManager;
-    private TextView textView, textInfo;
+    private TextView textView, textInfo, textIp;
     private AngleDataMessageQueue angleDataMessageQueue;
     SocketThread sThread;
     private AngleCalculator angleCalculator;
@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // Get an instance of the TextView
         textView = findViewById(R.id.text_view);
+        textIp = findViewById(R.id.ipaddress_text);
 
         Button connectButton = this.findViewById(R.id.ConnectButton);
         Button disconnectButton = this.findViewById(R.id.DisconnectButton);
@@ -52,8 +53,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         connectButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                sThread = new SocketThread(angleDataMessageQueue);
-                sThread.start();
+                String ip = textIp.getText().toString();
+                if(ip == ""){
+                    return;
+                }
+                if(sThread == null){
+                    sThread = new SocketThread(angleDataMessageQueue);
+                    sThread.setHost(ip, 10000);
+                    sThread.start();
+                }
                 startButton.setEnabled(true);
                 disconnectButton.setEnabled(true);
                 connectButton.setEnabled(false);
@@ -67,11 +75,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 disconnectButton.setEnabled(false);
                 while(true){
                     if(sThread == null || !sThread.isAlive()){
-                        continue;
+                        break;
                     }
-                    break;
                 }
                 connectButton.setEnabled(true);
+                sThread = null;
             }
         });
         startButton.setOnClickListener(new View.OnClickListener(){
@@ -81,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     sThread.setRunning(true);
                     stopButton.setEnabled(true);
                     startButton.setEnabled(false);
+                    disconnectButton.setEnabled(false);
                 }
             }
         });
@@ -91,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     sThread.setRunning(false);
                     startButton.setEnabled(true);
                     stopButton.setEnabled(false);
+                    disconnectButton.setEnabled(true);
                 }
             }
         });
@@ -147,7 +157,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //}
         AngleData angleData = this.angleCalculator.getCurrentAngleData();
         showAngleInfo((int)angleData.pitchX, (int)angleData.rollY, (int)angleData.azimuthZ);
-        this.angleDataMessageQueue.add(angleData);
+        if(sThread != null && sThread.isAlive()){
+            this.angleDataMessageQueue.add(angleData);
+        }
     }
     private void doMagneticAction(@NonNull SensorEvent event){
         this.angleCalculator.setMagneticValue(event.values.clone());
@@ -158,8 +170,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //}
         AngleData angleData = this.angleCalculator.getCurrentAngleData();
         showAngleInfo((int)angleData.pitchX, (int)angleData.rollY, (int)angleData.azimuthZ);
-        this.angleDataMessageQueue.add(angleData);
-
+        if(sThread != null && sThread.isAlive()) {
+            this.angleDataMessageQueue.add(angleData);
+        }
     }
 
     @Override
@@ -185,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
     private void showAngleInfo(float pitchX, float rollY, float azimuthZ){
-        String strTmp = String.format(Locale.US, "deltaAngle\n " +
+        String strTmp = String.format(Locale.US, "Angle\n " +
                 " Pitch: %f\n Roll: %f\n Azimuth: %f",pitchX, rollY, azimuthZ);
         textView.setText(strTmp);
     }

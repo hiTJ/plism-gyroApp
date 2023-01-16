@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import org.jetbrains.annotations.Contract;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -18,10 +19,12 @@ import java.util.List;
 
 public class SocketThread extends Thread{
     private AngleDataMessageQueue angleDataMessageQueue;
+    private String socketIp = "";
+    private int port;
     private boolean isRunning = false;
     private boolean isConnected = false;
     public SocketThread(AngleDataMessageQueue gQueue){
-        angleDataMessageQueue = gQueue;
+        this.angleDataMessageQueue = gQueue;
     }
     @NonNull
     @Contract(pure = true)
@@ -33,14 +36,22 @@ public class SocketThread extends Thread{
         }
         return word;
     }
+    public void setHost(String host, int port){
+        this.socketIp = host;
+        this.port = port;
+    }
+    private void connectSocket(Socket client, String host, int port) throws IOException {
+        InetSocketAddress ipep = new InetSocketAddress(socketIp, 10000);
+        // ソケット接続
+        client.connect(ipep);
+        isConnected = true;
+    }
     public void run(){
         try (Socket client = new Socket()) {
             // ソケットに接続するため、接続情報を設定する。
             //InetSocketAddress ipep = new InetSocketAddress("10.0.2.2", 9999);
-            InetSocketAddress ipep = new InetSocketAddress("192.168.3.50", 10000);
-            // ソケット接続
-            client.connect(ipep);
-            isConnected = true;
+            //InetSocketAddress ipep = new InetSocketAddress("192.168.3.50", 10000);
+            connectSocket(client, socketIp, port);
             // ソケット接続が完了すればinputstreamとoutputstreamを受け取る。
             try (OutputStream sender = client.getOutputStream(); InputStream receiver = client.getInputStream()) {
                 // メッセージはfor文を通って10回にメッセージを送信する。
