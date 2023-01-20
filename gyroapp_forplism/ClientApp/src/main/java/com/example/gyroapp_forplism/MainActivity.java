@@ -106,32 +106,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
 
     }
+    private Sensor gyro = null, mag = null, accel = null;
 
+    // バックグラウンドからの復帰でも呼ばれる
     @Override
     protected void onResume() {
         super.onResume();
         // Listenerの登録
-        Sensor gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        Sensor mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-        if(gyro != null && mag != null && accel != null){
-            //sensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_UI);
-            sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_UI);
-            sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_UI);
+        //if(this.gyro == null) {
+        //    this.gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        //    sensorManager.registerListener(this, this.gyro, SensorManager.SENSOR_DELAY_UI);
+        //}
+        if(this.mag == null) {
+            this.mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+            sensorManager.registerListener(this, this.mag, SensorManager.SENSOR_DELAY_UI);
         }
-        else{
-            String ns = "No Support";
-            textView.setText(ns);
+        if(this.accel == null){
+            this.accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            sensorManager.registerListener(this, this.accel, SensorManager.SENSOR_DELAY_UI);
         }
     }
 
-    // 解除するコードも入れる!
+    // バックグラウンド時にも呼ばれる
     @Override
     protected void onPause() {
         super.onPause();
         // Listenerを解除
-        sensorManager.unregisterListener(this);
+        // バックグラウンドでも動作するようにコメントアウト
+        //sensorManager.unregisterListener(this);
     }
 
 

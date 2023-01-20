@@ -19,11 +19,16 @@ import com.example.serverapp.R;
 
 import java.util.Locale;
 
-public class MainActivity extends Activity implements MessageQueueListenerInterface {
+public class MainActivity extends Activity {
 
+    private AngleDataMessageQueue angleDataMessageQueue;
     private SensorManager sensorManager;
-    private TextView textView, textInfo;
+    private TextView textView, textInfo, textStatus;
     SocketThread sThread;
+    BluetoothThread bThread;
+    Thread drawThread;
+    AngleData currentAngleData;
+    AngleData initialAngleData;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -31,30 +36,40 @@ public class MainActivity extends Activity implements MessageQueueListenerInterf
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        this.angleDataMessageQueue = new AngleDataMessageQueue();
         // Get an instance of the SensorManager
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sThread = new SocketThread();
+        sThread = new SocketThread(this.angleDataMessageQueue);
         sThread.start();
-
+        bThread = new BluetoothThread(this.angleDataMessageQueue);
+        bThread.start();
 
         textInfo = findViewById(R.id.text_info);
 
         Button button = this.findViewById(R.id.button);
         // Get an instance of the TextView
         textView = findViewById(R.id.text_view);
-        Thread drawThread = new Thread(new Runnable(){
+        textStatus = findViewById(R.id.connectionStatusView);
+        this.drawThread = new Thread(new Runnable(){
             public void run() {
                 while (true) {
                     try {
-                        AngleData angleData = sThread.pollAngleData();
-                        if (angleData != null) {
+                        //currentAngleData = sThread.peekAngleData();
+                        currentAngleData = angleDataMessageQueue.peek();
+                        if (currentAngleData != null) {
                             runOnUiThread(new Runnable() {
                                 public void run() {
-                                    textView.setText(angleData.pitchX + ", " + angleData.rollY + ", " + angleData.azimuthZ);
+                                    textView.setText(currentAngleData.pitchX + ", " + currentAngleData.rollY + ", " + currentAngleData.azimuthZ);
+                                    if(sThread.isConnected())
+                                    {
+                                        textStatus.setText("CONNECTED");
+                                    }else{
+                                        textStatus.setText("NOT CONNECTED");
+                                    }
                                 }
                             });
                         }
-                        Thread.sleep(10);
+                        Thread.sleep(1);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -62,30 +77,19 @@ public class MainActivity extends Activity implements MessageQueueListenerInterf
             }
         });
         drawThread.start();
-
-
     }
 
+    //　バックグラウンドから復帰時に呼び出される
     @Override
     protected void onResume() {
         super.onResume();
-        // Listenerの登録
-        Sensor gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-
-        String ns = "OnResume";
-        textView.setText(ns);
     }
 
-    // 解除するコードも入れる!
+    // バックグラウンド時に呼び出される
     @Override
     protected void onPause() {
         super.onPause();
     }
 
-    @Override
-    public void onQueuedMessage(){
-        AngleData angleData = sThread.pollAngleData();
-        textInfo.setText(angleData.pitchX + ", " + angleData.rollY + ", " + angleData.azimuthZ);
-    }
 
 }
