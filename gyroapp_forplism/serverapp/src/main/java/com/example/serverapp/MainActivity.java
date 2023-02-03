@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
         this.angleDataMessageQueue = new AngleDataMessageQueue();
         // Get an instance of the SensorManager
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sThread = new SocketThread(this.angleDataMessageQueue);
+        sThread = new SocketThread(this.angleDataMessageQueue, this.initialAngleData, this.currentAngleData);
         sThread.start();
         bThread = new BluetoothThread(this.angleDataMessageQueue);
         bThread.start();
@@ -54,21 +54,27 @@ public class MainActivity extends Activity {
             public void run() {
                 while (true) {
                     try {
-                        //currentAngleData = sThread.peekAngleData();
-                        currentAngleData = angleDataMessageQueue.peek();
-                        if (currentAngleData != null) {
-                            runOnUiThread(new Runnable() {
-                                public void run() {
-                                    textView.setText(currentAngleData.pitchX + ", " + currentAngleData.rollY + ", " + currentAngleData.azimuthZ);
-                                    if(sThread.isConnected())
-                                    {
-                                        textStatus.setText("CONNECTED");
-                                    }else{
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                //textView.setText(currentAngleData.pitchX + ", " + currentAngleData.rollY + ", " + currentAngleData.azimuthZ);
+                                initialAngleData = sThread.getInitAngleData();
+                                if(initialAngleData != null){
+                                    textView.setText("INIT: " + initialAngleData.pitchX + ", " + initialAngleData.rollY + ", " + initialAngleData.azimuthZ);
+                                }
+                                currentAngleData = sThread.getCurrentAngleData();
+                                if(currentAngleData != null){
+                                    textInfo.setText("CURRENT: " + currentAngleData.pitchX + ", " + currentAngleData.rollY + ", " + currentAngleData.azimuthZ);
+                                }
+                                if(sThread.isConnected())
+                                {
+                                    textStatus.setText("CONNECTED");
+                                }else{
+                                    if(textStatus != null) {
                                         textStatus.setText("NOT CONNECTED");
                                     }
                                 }
-                            });
-                        }
+                            }
+                        });
                         Thread.sleep(1);
                     } catch (InterruptedException e) {
                         e.printStackTrace();

@@ -1,4 +1,6 @@
 package com.example.serverapp;
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,12 +12,18 @@ import java.nio.ByteOrder;
 
 public class SocketThread extends Thread{
     private AngleDataMessageQueue angleDataMessageQueue;
+    private AngleData initAngleData;
+    private AngleData currentAngleData;
     private boolean isRunning = false;
     private boolean isConnected = false;
     private MessageQueueListenerInterface messageQueuelistener = null;
-    public SocketThread(AngleDataMessageQueue angleDataMessageQueue){
+    public SocketThread(AngleDataMessageQueue angleDataMessageQueue, AngleData initAngleData, AngleData currentAngleData){
         this.angleDataMessageQueue = angleDataMessageQueue;
+        this.initAngleData = initAngleData;
+        this.currentAngleData = currentAngleData;
     }
+    public AngleData getInitAngleData(){return initAngleData;}
+    public AngleData getCurrentAngleData(){return currentAngleData;}
     public boolean isConnected(){return isConnected;}
     public boolean isRunning(){return isRunning;}
     public void run(){
@@ -45,7 +53,12 @@ public class SocketThread extends Thread{
                         int azimuthZ = data[5] * 0x100 + (data[6] & 0xFF);
                         int initialization = data[7];
                         AngleData angleData = new AngleData(direction, rollX, pitchY, azimuthZ, initialization);
+                        if(initialization == 1){
+                            setInitAngleData(angleData);
+                        }
+                        setCurrentAngleData(angleData);
                         angleDataMessageQueue.add(angleData);
+                        Log.d("DEBUG", String.valueOf(angleDataMessageQueue.size()));
                     }
                 }
             }
@@ -56,6 +69,12 @@ public class SocketThread extends Thread{
             isConnected = false;
         }
 
+    }
+    private void setInitAngleData(AngleData initAngleData){
+        this.initAngleData = new AngleData(initAngleData);
+    }
+    private void setCurrentAngleData(AngleData currentAngleData){
+        this.currentAngleData = new AngleData(currentAngleData);
     }
     //public AngleData pollAngleData(){
     //    return angleDataMessageQueue.poll();
