@@ -37,7 +37,7 @@ public class BluetoothThread extends Thread{
                     Log.d("debug", "Do initialization!!");
                 }
                 int currentX = this.initializedAngleData.pitchX - angleData.pitchX;
-                int currentZ = this.initializedAngleData.pitchX - angleData.azimuthZ;
+                int currentZ = this.initializedAngleData.azimuthZ - angleData.azimuthZ;
                 int initialization = angleData.initialization;
                 Log.d("debug", "X: " + String.valueOf(currentX));
                 Log.d("debug", "Z: " + String.valueOf(currentZ));

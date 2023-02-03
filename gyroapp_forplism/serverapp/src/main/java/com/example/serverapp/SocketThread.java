@@ -58,7 +58,6 @@ public class SocketThread extends Thread{
                         }
                         setCurrentAngleData(angleData);
                         angleDataMessageQueue.add(angleData);
-                        Log.d("DEBUG", String.valueOf(angleDataMessageQueue.size()));
                     }
                 }
             }
