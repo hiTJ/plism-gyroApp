@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private AngleDataMessageQueue angleDataMessageQueue;
     SocketThread sThread;
     private AngleCalculator angleCalculator;
+    private boolean needInitialize;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -45,10 +46,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Button disconnectButton = this.findViewById(R.id.DisconnectButton);
         Button startButton = this.findViewById(R.id.StartButton);
         Button stopButton = this.findViewById(R.id.StopButton);
+        Button initializeButton = this.findViewById(R.id.InitializeButton);
         connectButton.setEnabled(true);
         disconnectButton.setEnabled(false);
         startButton.setEnabled(false);
         stopButton.setEnabled(false);
+        initializeButton.setEnabled(false);
 
         connectButton.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -65,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 startButton.setEnabled(true);
                 disconnectButton.setEnabled(true);
                 connectButton.setEnabled(false);
+                initializeButton.setEnabled(false);
             }
         });
         disconnectButton.setOnClickListener(new View.OnClickListener(){
@@ -73,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 sThread.setConnected(false);
                 startButton.setEnabled(false);
                 disconnectButton.setEnabled(false);
+                initializeButton.setEnabled(false);
                 while(true){
                     if(sThread == null || !sThread.isAlive()){
                         break;
@@ -90,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     stopButton.setEnabled(true);
                     startButton.setEnabled(false);
                     disconnectButton.setEnabled(false);
+                    initializeButton.setEnabled(true);
                 }
             }
         });
@@ -101,6 +107,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     startButton.setEnabled(true);
                     stopButton.setEnabled(false);
                     disconnectButton.setEnabled(true);
+                    initializeButton.setEnabled(false);
+                }
+            }
+        });
+        initializeButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if(sThread.isAlive() && sThread.isConnected()) {
+                    //TODO Initialize処理
+                    needInitialize = true;
                 }
             }
         });
@@ -152,28 +168,32 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
     private void doAccelAction(@NonNull SensorEvent event){
         this.angleCalculator.setAccelerometer(event.values.clone());
-        this.angleCalculator.calcAngle();
+        this.angleCalculator.calcAngle(needInitialize);
         //DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
         //if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
         //    return;
         //}
         AngleData angleData = this.angleCalculator.getCurrentAngleData();
+        angleData.initialize = needInitialize ? 1 : 0;
         showAngleInfo((int)angleData.pitchX, (int)angleData.rollY, (int)angleData.azimuthZ);
         if(sThread != null && sThread.isAlive()){
             this.angleDataMessageQueue.add(angleData);
+            this.needInitialize = false;
         }
     }
     private void doMagneticAction(@NonNull SensorEvent event){
         this.angleCalculator.setMagneticValue(event.values.clone());
-        this.angleCalculator.calcAngle();
+        this.angleCalculator.calcAngle(needInitialize);
         //DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
         //if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
         //    return;
         //}
         AngleData angleData = this.angleCalculator.getCurrentAngleData();
+        angleData.initialize = needInitialize ? 1 : 0;
         showAngleInfo((int)angleData.pitchX, (int)angleData.rollY, (int)angleData.azimuthZ);
         if(sThread != null && sThread.isAlive()) {
             this.angleDataMessageQueue.add(angleData);
+            this.needInitialize = false;
         }
     }
 

@@ -20,6 +20,7 @@ public class SocketThread extends Thread{
     private int port;
     private boolean isRunning = false;
     private boolean isConnected = false;
+    private boolean needInitialize = false;
     public SocketThread(AngleDataMessageQueue gQueue){
         this.angleDataMessageQueue = gQueue;
     }
@@ -42,6 +43,21 @@ public class SocketThread extends Thread{
         // ソケット接続
         client.connect(ipep);
         isConnected = true;
+    }
+    private AngleData pollLatestAngleData(){
+        AngleData latestAngleData = null;
+        int initialize = 0;
+        while (angleDataMessageQueue.size() != 0) {
+            AngleData angleData = angleDataMessageQueue.poll();
+            if(angleData.initialize == 1){
+                initialize = 1;
+            }
+            latestAngleData = angleData;
+        }
+        if(latestAngleData != null && initialize == 1){
+            latestAngleData.initialize = 1;
+        }
+        return latestAngleData;
     }
     public void run(){
         try (Socket client = new Socket()) {
@@ -68,16 +84,16 @@ public class SocketThread extends Thread{
                         }
                     }
                     // 送信するメッセージを作成する。
-                    AngleData angleData = angleDataMessageQueue.poll();
-                    angleDataMessageQueue.clear();
+                    AngleData angleData = pollLatestAngleData();
                     // stringをbyte配列に変換する。
                     //byte[] dataX = floatToByteArray(deltaAngleData.deltaPitchX);
                     //byte[] dataY = floatToByteArray(deltaAngleData.deltaRollY);
                     //byte[] dataZ = floatToByteArray(deltaAngleData.deltaAzimuthZ);
-                    byte direction = (byte)((int)angleData.direction);
+                    byte direction = (byte)(angleData.direction);
                     byte[] dataX = ByteBuffer.allocate(4).putInt(angleData.pitchX).array();
                     byte[] dataY = ByteBuffer.allocate(4).putInt(angleData.rollY).array();
                     byte[] dataZ = ByteBuffer.allocate(4).putInt(angleData.azimuthZ).array();
+                    byte initialize = (byte)(angleData.initialize);
                     //byte dataX = (byte)((int)angleData.pitchX);
                     //byte dataY = (byte)((int)angleData.rollY);
                     //byte dataZ = (byte)((int)angleData.azimuthZ);
@@ -89,6 +105,7 @@ public class SocketThread extends Thread{
                     outputStream.write(x);
                     outputStream.write(y);
                     outputStream.write(z);
+                    outputStream.write(initialize);
                     byte[] data = outputStream.toByteArray();
                     // ByteBufferを通ってデータサイズをbyteタイプに変換する。
                     ByteBuffer b = ByteBuffer.allocate(4);
