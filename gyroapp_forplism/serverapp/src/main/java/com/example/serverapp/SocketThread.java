@@ -47,6 +47,16 @@ public class SocketThread extends Thread{
                         // データを受け取る。
                         receiver.read(data, 0, length);
 
+                        // ByteBufferを通ってデータサイズをbyteタイプに変換する。
+                        ByteBuffer b = ByteBuffer.allocate(4);
+                        // byteフォマートはlittleエンディアンだ。
+                        b.order(ByteOrder.LITTLE_ENDIAN);
+                        b.putInt(data.length);
+                        // データ長さを送信
+                        sender.write(b.array(), 0, 4);
+                        // データ送信
+                        sender.write(data);
+
                         int direction = data[0];
                         int rollX = data[1] * 0x100 + (data[2] & 0xFF);
                         int pitchY = data[3] * 0x100 + (data[4] & 0xFF);
