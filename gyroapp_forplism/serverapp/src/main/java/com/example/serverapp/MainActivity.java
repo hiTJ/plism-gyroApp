@@ -2,15 +2,21 @@ package com.example.serverapp;//package your.package.name;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.hardware.SensorManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
     private AngleDataMessageQueue angleDataMessageQueue;
     private SensorManager sensorManager;
+    private BluetoothAdapter bluetoothAdapter;
     private TextView textInit, textCurrent, textDelta, textStatus;
     SocketThread sThread;
     BluetoothThread bThread;
@@ -24,12 +30,28 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if( !getPackageManager().hasSystemFeature( PackageManager.FEATURE_BLUETOOTH_LE ) )
+        {
+            Toast.makeText( this, "BLE is not supported", Toast.LENGTH_SHORT ).show();
+            finish();    // アプリ終了宣言
+            return;
+        }
+        // Bluetoothアダプタの取得
+        BluetoothManager bluetoothManager = (BluetoothManager)getSystemService( Context.BLUETOOTH_SERVICE );
+        this.bluetoothAdapter = bluetoothManager.getAdapter();
+        if( null == this.bluetoothAdapter )
+        {    // Android端末がBluetoothをサポートしていない
+            Toast.makeText( this, "BLE is not supported", Toast.LENGTH_SHORT ).show();
+            finish();    // アプリ終了宣言
+            return;
+        }
+
         this.angleDataMessageQueue = new AngleDataMessageQueue();
         // Get an instance of the SensorManager
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         sThread = new SocketThread(this.angleDataMessageQueue, this.initialAngleData, this.currentAngleData);
         sThread.start();
-        bThread = new BluetoothThread(this.angleDataMessageQueue);
+        bThread = new BluetoothThread(this.angleDataMessageQueue, this.bluetoothAdapter);
         bThread.start();
 
         textCurrent = findViewById(R.id.text_current);
