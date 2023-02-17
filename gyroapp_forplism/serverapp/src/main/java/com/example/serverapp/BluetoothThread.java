@@ -26,7 +26,6 @@ public class BluetoothThread extends Thread{
     private BluetoothAdapter bluetoothAdapter;
     private Set<BluetoothDevice> pairedDevices;
     private String deviceName = "";
-    private SerialPortProfileConnectThread connectTread;
     private BluetoothSerial bluetoothSerial;
     public BluetoothThread(AngleDataMessageQueue angleDataMessageQueue, BluetoothAdapter bluetoothAdapter){
         this.angleDataMessageQueue = angleDataMessageQueue;
