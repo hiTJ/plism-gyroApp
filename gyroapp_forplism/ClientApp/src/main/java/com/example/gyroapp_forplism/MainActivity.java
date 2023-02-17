@@ -19,21 +19,11 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     private SensorManager sensorManager;
-    private TextView textView, textInfo;
-    private GyroMessageQueue gQueue;
+    private TextView textView, textInfo, textIp;
+    private AngleDataMessageQueue angleDataMessageQueue;
     SocketThread sThread;
-    private boolean isStopped;
     private AngleCalculator angleCalculator;
-    /** 地磁気行列 */
-    private float[] mMagneticValues;
-    /** 加速度行列 */
-    private float[] mAccelerometerValues;
-    /** X軸の回転角度 */
-    private int mPitchX;
-    /** Y軸の回転角度 */
-    private int mRollY;
-    /** Z軸の回転角度(方位角) */
-    private int mAzimuthZ;
+    private boolean needInitialize;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -43,31 +33,42 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // Get an instance of the SensorManager
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        gQueue = new DeltaAngleMessageQueue();
+        angleDataMessageQueue = new AngleDataMessageQueue();
         angleCalculator = new AngleCalculator();
 
         textInfo = findViewById(R.id.text_info);
 
         // Get an instance of the TextView
         textView = findViewById(R.id.text_view);
+        textIp = findViewById(R.id.ipaddress_text);
 
         Button connectButton = this.findViewById(R.id.ConnectButton);
         Button disconnectButton = this.findViewById(R.id.DisconnectButton);
         Button startButton = this.findViewById(R.id.StartButton);
         Button stopButton = this.findViewById(R.id.StopButton);
+        Button initializeButton = this.findViewById(R.id.InitializeButton);
         connectButton.setEnabled(true);
         disconnectButton.setEnabled(false);
         startButton.setEnabled(false);
         stopButton.setEnabled(false);
+        initializeButton.setEnabled(false);
 
         connectButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                sThread = new SocketThread(gQueue);
-                sThread.start();
+                String ip = textIp.getText().toString();
+                if(ip == ""){
+                    return;
+                }
+                if(sThread == null){
+                    sThread = new SocketThread(angleDataMessageQueue);
+                    sThread.setHost(ip, 10000);
+                    sThread.start();
+                }
                 startButton.setEnabled(true);
                 disconnectButton.setEnabled(true);
                 connectButton.setEnabled(false);
+                initializeButton.setEnabled(false);
             }
         });
         disconnectButton.setOnClickListener(new View.OnClickListener(){
@@ -76,23 +77,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 sThread.setConnected(false);
                 startButton.setEnabled(false);
                 disconnectButton.setEnabled(false);
+                initializeButton.setEnabled(false);
                 while(true){
                     if(sThread == null || !sThread.isAlive()){
-                        continue;
+                        break;
                     }
-                    break;
                 }
-                connectButton.setEnabled(false);
+                connectButton.setEnabled(true);
+                sThread = null;
             }
         });
         startButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 if(sThread.isAlive() && sThread.isConnected()) {
-                    sThread.toggleRunning();
-                    isStopped = true;
+                    sThread.setRunning(true);
                     stopButton.setEnabled(true);
                     startButton.setEnabled(false);
+                    disconnectButton.setEnabled(false);
+                    initializeButton.setEnabled(true);
                 }
             }
         });
@@ -100,41 +103,53 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
                 if(sThread.isAlive() && sThread.isConnected()) {
-                    sThread.toggleRunning();
-                    isStopped = false;
+                    sThread.setRunning(false);
                     startButton.setEnabled(true);
                     stopButton.setEnabled(false);
+                    disconnectButton.setEnabled(true);
+                    initializeButton.setEnabled(false);
+                }
+            }
+        });
+        initializeButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if(sThread.isAlive() && sThread.isConnected()) {
+                    //TODO Initialize処理
+                    needInitialize = true;
                 }
             }
         });
 
     }
+    private Sensor gyro = null, mag = null, accel = null;
 
+    // バックグラウンドからの復帰でも呼ばれる
     @Override
     protected void onResume() {
         super.onResume();
         // Listenerの登録
-        Sensor gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        Sensor mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-        if(gyro != null && mag != null && accel != null){
-            //sensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_UI);
-            sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_UI);
-            sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_UI);
+        //if(this.gyro == null) {
+        //    this.gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        //    sensorManager.registerListener(this, this.gyro, SensorManager.SENSOR_DELAY_UI);
+        //}
+        if(this.mag == null) {
+            this.mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+            sensorManager.registerListener(this, this.mag, SensorManager.SENSOR_DELAY_UI);
         }
-        else{
-            String ns = "No Support";
-            textView.setText(ns);
+        if(this.accel == null){
+            this.accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            sensorManager.registerListener(this, this.accel, SensorManager.SENSOR_DELAY_UI);
         }
     }
 
-    // 解除するコードも入れる!
+    // バックグラウンド時にも呼ばれる
     @Override
     protected void onPause() {
         super.onPause();
         // Listenerを解除
-        sensorManager.unregisterListener(this);
+        // バックグラウンドでも動作するようにコメントアウト
+        //sensorManager.unregisterListener(this);
     }
 
 
@@ -149,33 +164,37 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         //showInfo(event);
         GyroData gyroData = new GyroData(sensorX, sensorY, sensorZ);
-        if(!isStopped){
-            gQueue.add(gyroData);
-        }
+        //TODO Gyro値を使用するならば改めてqueue追加の処理を入れる
     }
     private void doAccelAction(@NonNull SensorEvent event){
         this.angleCalculator.setAccelerometer(event.values.clone());
-        this.angleCalculator.calcAngle();
-        DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
-        if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
-            return;
+        this.angleCalculator.calcAngle(needInitialize);
+        //DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
+        //if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
+        //    return;
+        //}
+        AngleData angleData = this.angleCalculator.getCurrentAngleData();
+        angleData.initialize = needInitialize ? 1 : 0;
+        showAngleInfo((int)angleData.pitchX, (int)angleData.rollY, (int)angleData.azimuthZ);
+        if(sThread != null && sThread.isAlive()){
+            this.angleDataMessageQueue.add(angleData);
+            this.needInitialize = false;
         }
-
-        AngleData currentData = this.angleCalculator.getCurrentAngleData();
-        showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
-        //showAngleInfo((int)currentData.pitchX, (int)currentData.rollY, (int)currentData.azimuthZ);
     }
     private void doMagneticAction(@NonNull SensorEvent event){
         this.angleCalculator.setMagneticValue(event.values.clone());
-        this.angleCalculator.calcAngle();
-        DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
-        if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
-            return;
+        this.angleCalculator.calcAngle(needInitialize);
+        //DeltaAngleData deltaAngleData =  this.angleCalculator.getDeltaAngle();
+        //if(deltaAngleData.deltaAzimuthZ == 0 && deltaAngleData.deltaRollY == 0 || deltaAngleData.deltaPitchX == 0){
+        //    return;
+        //}
+        AngleData angleData = this.angleCalculator.getCurrentAngleData();
+        angleData.initialize = needInitialize ? 1 : 0;
+        showAngleInfo((int)angleData.pitchX, (int)angleData.rollY, (int)angleData.azimuthZ);
+        if(sThread != null && sThread.isAlive()) {
+            this.angleDataMessageQueue.add(angleData);
+            this.needInitialize = false;
         }
-        AngleData currentData = this.angleCalculator.getCurrentAngleData();
-        showAngleInfo((int)deltaAngleData.deltaPitchX, (int)deltaAngleData.deltaRollY, (int)deltaAngleData.deltaAzimuthZ);
-        //showAngleInfo((int)currentData.pitchX, (int)currentData.rollY, (int)currentData.azimuthZ);
-
     }
 
     @Override
@@ -201,7 +220,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
     private void showAngleInfo(float pitchX, float rollY, float azimuthZ){
-        String strTmp = String.format(Locale.US, "deltaAngle\n " +
+        String strTmp = String.format(Locale.US, "Angle\n " +
                 " Pitch: %f\n Roll: %f\n Azimuth: %f",pitchX, rollY, azimuthZ);
         textView.setText(strTmp);
     }

@@ -1,30 +1,27 @@
-package com.example.gyroapp_forplism;
+package com.example.serverapp;
 
 import androidx.annotation.NonNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AngleData implements Cloneable{
     int direction;
     int pitchX;
     int rollY;
     int azimuthZ;
-    int initialize;
+    int initialization;
 
-    public AngleData(int direction, float pitchX, float rollY, float azimuthZ, int initialize){
+    public AngleData(int direction, float pitchX, float rollY, float azimuthZ, int initialization){
         this.direction = direction;
         this.pitchX = (int)pitchX;
         this.rollY = (int)rollY;
         this.azimuthZ = (int)azimuthZ;
-        this.initialize = initialize;
+        this.initialization = initialization;
     }
     public AngleData(@NonNull AngleData angleData){
         this.direction = angleData.direction;
         this.pitchX = angleData.pitchX;
         this.rollY = angleData.rollY;
         this.azimuthZ = angleData.azimuthZ;
-        this.initialize = angleData.initialize;
+        this.initialization = angleData.initialization;
     }
 
     //@Override

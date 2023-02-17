@@ -22,12 +22,9 @@ public class AngleCalculator {
 
     public AngleCalculator(){
         angleDataList = new ArrayList<AngleData>();
-        currentAngleData = new AngleData(0,0,0);
-        previousAngleData = new AngleData(0,0,0);
+        currentAngleData = new AngleData(0,0,0,0,0);
+        previousAngleData = new AngleData(0,0,0,0,0);
         deltaAngleData = new DeltaAngleData(0,0,0);
-    }
-    public  DeltaAngleData getDeltaAngle(){
-        return this.deltaAngleData;
     }
     public  AngleData getCurrentAngleData(){
         return this.currentAngleData;
@@ -67,10 +64,10 @@ public class AngleCalculator {
         x = x / dataSize;
         y = y / dataSize;
         z = z / dataSize;
-        return new AngleData(x, y, z);
+        return new AngleData(0, x, y, z,0);
     }
     
-    public void calcAngle() {
+    public void calcAngle(boolean needInitialize) {
         if (this.magneticValues != null && this.accelerometerValues != null) {
             float[] rotationMatrix = new float[MATRIX_SIZE];
             float[] inclinationMatrix = new float[MATRIX_SIZE];
@@ -84,12 +81,13 @@ public class AngleCalculator {
             float azimuthZ = radianToDegrees(orientationValues[0]);
             float pitchX = radianToDegrees(orientationValues[1]);
             float rollY = radianToDegrees(orientationValues[2]);
-            AngleData angleData = new AngleData(pitchX, rollY, azimuthZ);
+            AngleData angleData = new AngleData(0, pitchX, rollY, azimuthZ,0);
             if (angleDataList.size() >= MAXSIZE_ANGLE_DATA) {
                 angleDataList.remove(0);
             }
             angleDataList.add(angleData);
             currentAngleData = getAverageAngleData();
+            currentAngleData.initialize = needInitialize ? 1 : 0;
 
             Log.d("DEBUG", "Current: " + currentAngleData.azimuthZ + ", " + currentAngleData.rollY + ", " + currentAngleData.pitchX);
             Log.d("DEBUG", "Current: " + previousAngleData.azimuthZ + ", " + previousAngleData.rollY + ", " + previousAngleData.pitchX);

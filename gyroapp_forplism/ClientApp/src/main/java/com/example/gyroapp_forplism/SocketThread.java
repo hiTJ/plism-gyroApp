@@ -1,6 +1,12 @@
 package com.example.gyroapp_forplism;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import org.jetbrains.annotations.Contract;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -9,40 +15,98 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class SocketThread extends Thread{
-    private DeltaAngleMessageQueue gyroQueue;
+    private AngleDataMessageQueue angleDataMessageQueue;
+    private String socketIp = "";
+    private int port;
     private boolean isRunning = false;
     private boolean isConnected = false;
-    public SocketThread(DeltaAngleMessageQueue gQueue){
-        gyroQueue = gQueue;
+    private boolean needInitialize = false;
+    public SocketThread(AngleDataMessageQueue gQueue){
+        this.angleDataMessageQueue = gQueue;
+    }
+    @NonNull
+    @Contract(pure = true)
+    private byte[] castBytesToWORD(byte[] bytes){
+        byte[] word = new byte[2];
+        for (int i = 0; i < word.length; i++)
+        {
+            word[word.length-i-1] = bytes[bytes.length-i-1];
+        }
+        return word;
+    }
+    public void setHost(String host, int port){
+        this.socketIp = host;
+        this.port = port;
+    }
+    private void connectSocket(Socket client, String host, int port) throws IOException {
+        InetSocketAddress ipep = new InetSocketAddress(socketIp, 10000);
+        // ソケット接続
+        client.connect(ipep);
+        isConnected = true;
+    }
+    private AngleData pollLatestAngleData(){
+        AngleData latestAngleData = null;
+        int initialize = 0;
+        while (angleDataMessageQueue.size() != 0) {
+            AngleData angleData = angleDataMessageQueue.poll();
+            if(angleData.initialize == 1){
+                initialize = 1;
+            }
+            latestAngleData = angleData;
+        }
+        if(latestAngleData != null && initialize == 1){
+            latestAngleData.initialize = 1;
+        }
+        return latestAngleData;
     }
     public void run(){
         try (Socket client = new Socket()) {
             // ソケットに接続するため、接続情報を設定する。
             //InetSocketAddress ipep = new InetSocketAddress("10.0.2.2", 9999);
-            //InetSocketAddress ipep = new InetSocketAddress("126,0,29,26", 10000);
-            InetSocketAddress ipep = new InetSocketAddress("192.168.3.50", 10000);
-            // ソケット接続
-            client.connect(ipep);
-            isConnected = true;
+            //InetSocketAddress ipep = new InetSocketAddress("192.168.3.50", 10000);
+            connectSocket(client, socketIp, port);
             // ソケット接続が完了すればinputstreamとoutputstreamを受け取る。
             try (OutputStream sender = client.getOutputStream(); InputStream receiver = client.getInputStream()) {
                 // メッセージはfor文を通って10回にメッセージを送信する。
                 while (true) {
                     while(true) {
-                        if (gyroQueue.isEmpty()) {
+                        if (!isConnected){
+                            angleDataMessageQueue.clear();
+                            Log.d("DEBUG", "Dispose this thread by yourself.");
+                            return;
+                        }
+                        if (angleDataMessageQueue.isEmpty()) {
                             SocketThread.sleep(10);
                         }else{
-                            if (!isConnected){
-                                Log.d("DEBUG", "Dispose this thread by yourself.");
-                                return;
+                            if(isRunning) {
+                                break;
                             }
-                            break;
                         }
                     }
                     // 送信するメッセージを作成する。
-                    String msg = gyroQueue.poll().message;
+                    AngleData angleData = pollLatestAngleData();
                     // stringをbyte配列に変換する。
-                    byte[] data = msg.getBytes();
+                    //byte[] dataX = floatToByteArray(deltaAngleData.deltaPitchX);
+                    //byte[] dataY = floatToByteArray(deltaAngleData.deltaRollY);
+                    //byte[] dataZ = floatToByteArray(deltaAngleData.deltaAzimuthZ);
+                    byte direction = (byte)(angleData.direction);
+                    byte[] dataX = ByteBuffer.allocate(4).putInt(angleData.pitchX).array();
+                    byte[] dataY = ByteBuffer.allocate(4).putInt(angleData.rollY).array();
+                    byte[] dataZ = ByteBuffer.allocate(4).putInt(angleData.azimuthZ).array();
+                    byte initialize = (byte)(angleData.initialize);
+                    //byte dataX = (byte)((int)angleData.pitchX);
+                    //byte dataY = (byte)((int)angleData.rollY);
+                    //byte dataZ = (byte)((int)angleData.azimuthZ);
+                    byte[] x = castBytesToWORD(dataX);
+                    byte[] y = castBytesToWORD(dataY);
+                    byte[] z = castBytesToWORD(dataZ);
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    outputStream.write(direction);
+                    outputStream.write(x);
+                    outputStream.write(y);
+                    outputStream.write(z);
+                    outputStream.write(initialize);
+                    byte[] data = outputStream.toByteArray();
                     // ByteBufferを通ってデータサイズをbyteタイプに変換する。
                     ByteBuffer b = ByteBuffer.allocate(4);
                     // byteフォマートはlittleエンディアンだ。
@@ -64,11 +128,6 @@ public class SocketThread extends Thread{
                     data = new byte[length];
                     // データを受け取る。
                     receiver.read(data, 0, length);
-
-                    // byteタイプの???をstringタイプに変換する。
-                    //msg = new String(data, "UTF-8");
-                    // コンソールに出力する。
-                    //System.out.println(msg);
                 }
             }
         } catch (Throwable e) {
@@ -83,8 +142,18 @@ public class SocketThread extends Thread{
         return isConnected;
     }
     public void setConnected(boolean isConnected){ this.isConnected = isConnected; }
-    public void toggleRunning(){
-        isRunning = !isRunning;
+    public void setRunning(boolean isRunning){
+        this.isRunning = isRunning;
+    }
+
+    //Utils
+    public static byte[] floatToByteArray(float value) {
+        int intBits =  Float.floatToIntBits(value);
+        return new byte[] {
+                (byte) (intBits >> 24),
+                (byte) (intBits >> 16),
+                (byte) (intBits >> 8),
+                (byte) (intBits) };
     }
 }
 

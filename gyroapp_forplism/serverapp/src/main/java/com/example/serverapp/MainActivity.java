@@ -1,29 +1,28 @@
 package com.example.serverapp;//package your.package.name;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Looper;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.example.serverapp.R;
+public class MainActivity extends Activity {
 
-import java.util.Locale;
-
-public class MainActivity extends Activity implements MessageQueueListenerInterface {
-
+    private AngleDataMessageQueue angleDataMessageQueue;
     private SensorManager sensorManager;
-    private TextView textView, textInfo;
+    private BluetoothAdapter bluetoothAdapter;
+    private TextView textInit, textCurrent, textDelta, textStatus;
     SocketThread sThread;
+    BluetoothThread bThread;
+    Thread drawThread;
+    AngleData currentAngleData;
+    AngleData initialAngleData;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -31,30 +30,63 @@ public class MainActivity extends Activity implements MessageQueueListenerInterf
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if( !getPackageManager().hasSystemFeature( PackageManager.FEATURE_BLUETOOTH_LE ) )
+        {
+            Toast.makeText( this, "BLE is not supported", Toast.LENGTH_SHORT ).show();
+            finish();    // アプリ終了宣言
+            return;
+        }
+        // Bluetoothアダプタの取得
+        BluetoothManager bluetoothManager = (BluetoothManager)getSystemService( Context.BLUETOOTH_SERVICE );
+        this.bluetoothAdapter = bluetoothManager.getAdapter();
+        if( null == this.bluetoothAdapter )
+        {    // Android端末がBluetoothをサポートしていない
+            Toast.makeText( this, "BLE is not supported", Toast.LENGTH_SHORT ).show();
+            finish();    // アプリ終了宣言
+            return;
+        }
+
+        this.angleDataMessageQueue = new AngleDataMessageQueue();
         // Get an instance of the SensorManager
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sThread = new SocketThread();
+        sThread = new SocketThread(this.angleDataMessageQueue, this.initialAngleData, this.currentAngleData);
         sThread.start();
+        bThread = new BluetoothThread(this.angleDataMessageQueue, this.bluetoothAdapter);
+        bThread.start();
 
-
-        textInfo = findViewById(R.id.text_info);
+        textCurrent = findViewById(R.id.text_current);
 
         Button button = this.findViewById(R.id.button);
         // Get an instance of the TextView
-        textView = findViewById(R.id.text_view);
-        Thread drawThread = new Thread(new Runnable(){
+        textInit = findViewById(R.id.text_init);
+        textDelta = findViewById(R.id.text_delta);
+        textStatus = findViewById(R.id.connectionStatusView);
+        this.drawThread = new Thread(new Runnable(){
             public void run() {
                 while (true) {
                     try {
-                        String message = sThread.pollMessage();
-                        if (message != "") {
-                            runOnUiThread(new Runnable() {
-                                public void run() {
-                                    textView.setText(message);
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                //textView.setText(currentAngleData.pitchX + ", " + currentAngleData.rollY + ", " + currentAngleData.azimuthZ);
+                                initialAngleData = sThread.getInitAngleData();
+                                if(initialAngleData != null){
+                                    textInit.setText("INIT: " + initialAngleData.pitchX + ", " + initialAngleData.rollY + ", " + initialAngleData.azimuthZ);
                                 }
-                            });
-                        }
-                        Thread.sleep(10);
+                                currentAngleData = sThread.getCurrentAngleData();
+                                if(currentAngleData != null){
+                                    textCurrent.setText("CURRENT: " + currentAngleData.pitchX + ", " + currentAngleData.rollY + ", " + currentAngleData.azimuthZ);
+                                }
+                                if(sThread.isConnected())
+                                {
+                                    textStatus.setText("CONNECTED");
+                                }else{
+                                    if(textStatus != null) {
+                                        textStatus.setText("NOT CONNECTED");
+                                    }
+                                }
+                            }
+                        });
+                        Thread.sleep(1);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -62,30 +94,19 @@ public class MainActivity extends Activity implements MessageQueueListenerInterf
             }
         });
         drawThread.start();
-
-
     }
 
+    //　バックグラウンドから復帰時に呼び出される
     @Override
     protected void onResume() {
         super.onResume();
-        // Listenerの登録
-        Sensor gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-
-        String ns = "OnResume";
-        textView.setText(ns);
     }
 
-    // 解除するコードも入れる!
+    // バックグラウンド時に呼び出される
     @Override
     protected void onPause() {
         super.onPause();
     }
 
-    @Override
-    public void onQueuedMessage(){
-        String message = sThread.pollMessage();
-        textInfo.setText((message));
-    }
 
 }
