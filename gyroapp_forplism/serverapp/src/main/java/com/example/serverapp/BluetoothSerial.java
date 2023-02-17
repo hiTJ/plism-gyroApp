@@ -13,9 +13,16 @@ public class BluetoothSerial {
     private BluetoothSocket socket;
     private InputStream inputStream;
     private OutputStream outputStream;
+    private boolean isConnected = false;
 
     private static final UUID SERIAL_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
+    public boolean isConnected(){
+        return this.isConnected;
+    }
+    public BluetoothSerial(BluetoothAdapter bluetoothAdapter){
+        this.bluetoothAdapter = bluetoothAdapter;
+    }
     public void connectToDevice(String deviceAddress) {
         BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
         try {
@@ -23,10 +30,13 @@ public class BluetoothSerial {
             socket.connect();
             inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
+            isConnected = true;
         } catch (IOException e) {
             e.printStackTrace();
+            isConnected = false;
         } catch (SecurityException ex){
             ex.printStackTrace();
+            isConnected = false;
         }
     }
 
