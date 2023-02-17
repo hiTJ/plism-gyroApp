@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
         bThread.start();
 
         textCurrent = findViewById(R.id.text_current);
+        textDelta = findViewById(R.id.text_delta);
 
         Button button = this.findViewById(R.id.button);
         // Get an instance of the TextView
@@ -69,12 +70,15 @@ public class MainActivity extends Activity {
                             public void run() {
                                 //textView.setText(currentAngleData.pitchX + ", " + currentAngleData.rollY + ", " + currentAngleData.azimuthZ);
                                 initialAngleData = sThread.getInitAngleData();
-                                if(initialAngleData != null){
-                                    textInit.setText("INIT: " + initialAngleData.pitchX + ", " + initialAngleData.rollY + ", " + initialAngleData.azimuthZ);
-                                }
                                 currentAngleData = sThread.getCurrentAngleData();
-                                if(currentAngleData != null){
-                                    textCurrent.setText("CURRENT: " + currentAngleData.pitchX + ", " + currentAngleData.rollY + ", " + currentAngleData.azimuthZ);
+                                if(initialAngleData != null){
+                                    textInit.setText("INIT: " + initialAngleData.pitchX + ", " + initialAngleData.azimuthZ);
+                                    if(currentAngleData != null){
+                                        int pitchX = initialAngleData.pitchX - currentAngleData.pitchX;
+                                        int azimuthZ = currentAngleData.azimuthZ - initialAngleData.azimuthZ;
+                                        textCurrent.setText("CURRENT: " + currentAngleData.pitchX + ", " + currentAngleData.azimuthZ);
+                                        textDelta.setText("DELTA: " + pitchX + ", " + azimuthZ);
+                                    }
                                 }
                                 if(sThread.isConnected())
                                 {
