@@ -70,4 +70,10 @@
         android:layout_height="wrap_content"
         android:text="Initialize" />
 
+    <Button
+        android:id="@+id/DeviceResetButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reset Device" />
+
 </LinearLayout>
