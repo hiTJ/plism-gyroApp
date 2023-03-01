@@ -182,7 +182,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //TODO Gyro値を使用するならば改めてqueue追加の処理を入れる
     }
     private void doAngleAction(@NonNull SensorEvent event){
-        this.angleCalculator.setAccelerometer(event.values.clone());
         this.angleCalculator.calcAngle(needInitialize, needResetDevice);
         AngleData angleData = this.angleCalculator.getCurrentAngleData();
         angleData.initialize = needInitialize ? 1 : 0;
@@ -195,9 +194,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
     private void doAccelAction(@NonNull SensorEvent event){
+        this.angleCalculator.setAccelerometer(event.values.clone());
         doAngleAction(event);
     }
     private void doMagneticAction(@NonNull SensorEvent event){
+        this.angleCalculator.setMagneticValue(event.values.clone());
         doAngleAction(event);
     }
 

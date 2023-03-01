@@ -88,6 +88,7 @@ public class AngleCalculator {
             angleDataList.add(angleData);
             currentAngleData = getAverageAngleData();
             currentAngleData.initialize = needInitialize ? 1 : 0;
+            currentAngleData.deviceReset = needResetDevice ? 1 : 0;
 
             Log.d("DEBUG", "Current: " + currentAngleData.azimuthZ + ", " + currentAngleData.rollY + ", " + currentAngleData.pitchX);
             Log.d("DEBUG", "Current: " + previousAngleData.azimuthZ + ", " + previousAngleData.rollY + ", " + previousAngleData.pitchX);

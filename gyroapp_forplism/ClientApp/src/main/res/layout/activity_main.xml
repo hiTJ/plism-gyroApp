@@ -38,7 +38,7 @@
         android:ems="10"
         android:textColor="#00f"
         android:inputType="textPersonName"
-        android:text="192.168.3.50" />
+        android:text="192.168.3.51" />
 
     <Button
         android:id="@+id/ConnectButton"
