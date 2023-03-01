@@ -21,8 +21,15 @@ public class BluetoothThread extends Thread{
     private AngleData initializedAngleData;
     private boolean isRunning = false;
     private boolean isConnected = false;
+    private boolean needDeviceReset = false;
     public boolean isConnected(){return isConnected;}
     public boolean isRunning(){return isRunning;}
+    public void setNeedDeviceReset(boolean needDeviceReset){
+        this.needDeviceReset = needDeviceReset;
+    }
+    public boolean getNeedDeviceReset(){
+        return this.needDeviceReset;
+    }
     private BluetoothAdapter bluetoothAdapter;
     private Set<BluetoothDevice> pairedDevices;
     private String deviceName = "";
@@ -38,12 +45,12 @@ public class BluetoothThread extends Thread{
         int init = 0;
         for(int i = 0; i < angleDataMessageQueue.size(); i++){
             result = angleDataMessageQueue.poll();
-            if(result.initialization == 1){
+            if(result.initialize == 1){
                 init = 1;
             }
         }
         if(result != null){
-            result.initialization = init;
+            result.initialize = init;
         }
 
         return result;
@@ -75,7 +82,14 @@ public class BluetoothThread extends Thread{
                 if(angleData == null){
                     continue;
                 }
-                if(angleData.initialization == 1){
+                if (angleData.deviceReset == 1){
+                    Log.d("debug", "Reset Device!!");
+                    try {
+                        resetDevice();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else if(angleData.initialize == 1){
                     this.initializedAngleData = angleData;
                     Log.d("debug", "Do initialization!!");
                 }
@@ -95,7 +109,7 @@ public class BluetoothThread extends Thread{
                 }
                 currentZ = currentZ + 180;
                 currentZ = currentZ < 0 ? currentZ + 360 : currentZ;
-                int initialization = angleData.initialization;
+                int initialization = angleData.initialize;
                 byte[] dataX = ByteBuffer.allocate(4).putInt(currentX).array();
                 byte[] dataZ = ByteBuffer.allocate(4).putInt(currentZ).array();
                 byte[] x = castBytesToWORD(dataX);
@@ -115,6 +129,12 @@ public class BluetoothThread extends Thread{
                 e.printStackTrace();
             }
         }
+    }
+    private void resetDevice() throws InterruptedException {
+        String strc = "c\n";
+        byte[] sbytec = strc.getBytes();
+        this.bluetoothSerial.write(sbytec);
+        Thread.sleep(2000);
     }
 
     //Utils
