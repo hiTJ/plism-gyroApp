@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import java.util.UUID;
 
 public class BluetoothSerial {
-    private BluetoothAdapter bluetoothAdapter;
+    private final BluetoothAdapter bluetoothAdapter;
     private BluetoothSocket socket;
     private InputStream inputStream;
     private OutputStream outputStream;
@@ -31,11 +31,8 @@ public class BluetoothSerial {
             inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
             isConnected = true;
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             e.printStackTrace();
-            isConnected = false;
-        } catch (SecurityException ex){
-            ex.printStackTrace();
             isConnected = false;
         }
     }

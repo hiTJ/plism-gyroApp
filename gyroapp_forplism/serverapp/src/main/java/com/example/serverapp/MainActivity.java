@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.hardware.SensorManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,7 +14,6 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 
     private AngleDataMessageQueue angleDataMessageQueue;
-    private SensorManager sensorManager;
     private BluetoothAdapter bluetoothAdapter;
     private TextView textInit, textCurrent, textDelta, textStatus;
     SocketThread sThread;
@@ -48,7 +46,6 @@ public class MainActivity extends Activity {
 
         this.angleDataMessageQueue = new AngleDataMessageQueue();
         // Get an instance of the SensorManager
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         sThread = new SocketThread(this.angleDataMessageQueue, this.initialAngleData, this.currentAngleData);
         sThread.start();
         bThread = new BluetoothThread(this.angleDataMessageQueue, this.bluetoothAdapter);

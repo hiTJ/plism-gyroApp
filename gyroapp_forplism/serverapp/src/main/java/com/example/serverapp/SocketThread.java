@@ -1,5 +1,4 @@
 package com.example.serverapp;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,18 +10,15 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class SocketThread extends Thread{
-    private AngleDataMessageQueue angleDataMessageQueue;
+    private final AngleDataMessageQueue angleDataMessageQueue;
     private AngleData initAngleData;
-    private AngleData resetAngleData;
     private AngleData currentAngleData;
     private boolean isRunning = false;
     private boolean isConnected = false;
-    private MessageQueueListenerInterface messageQueuelistener = null;
     public SocketThread(AngleDataMessageQueue angleDataMessageQueue, AngleData initAngleData, AngleData currentAngleData){
         this.angleDataMessageQueue = angleDataMessageQueue;
         this.initAngleData = initAngleData;
         this.currentAngleData = currentAngleData;
-        this.resetAngleData = new AngleData(0,0,0,0,0,0);
     }
     public AngleData getInitAngleData(){return initAngleData;}
     public AngleData getCurrentAngleData(){return currentAngleData;}
@@ -30,9 +26,9 @@ public class SocketThread extends Thread{
     public boolean isRunning(){return isRunning;}
     public void run(){
         try (ServerSocket server = new ServerSocket()) {
-            InetSocketAddress ipep = new InetSocketAddress(10000);
+            InetSocketAddress iPep = new InetSocketAddress(10000);
             // ソケット接続
-            server.bind(ipep);
+            server.bind(iPep);
             while(true) {
                 isConnected = false;
                 try (Socket socket = server.accept()) {
@@ -41,7 +37,7 @@ public class SocketThread extends Thread{
                         while (true) {
                             isRunning = true;
                             byte[] lengthData = new byte[4];
-                            receiver.read(lengthData, 0, 4);
+                             receiver.read(lengthData, 0, 4);
                             // ByteBufferを通ってlittleエンディアンで変換してデータサイズを受け取る。
                             ByteBuffer bb = ByteBuffer.wrap(lengthData);
                             bb.order(ByteOrder.LITTLE_ENDIAN);
@@ -68,9 +64,7 @@ public class SocketThread extends Thread{
                             int initialization = data[7];
                             int resetDevice = data[8];
                             AngleData angleData = new AngleData(direction, rollX, pitchY, azimuthZ, initialization, resetDevice);
-                            if(resetDevice == 1) {
-                                setResetAngleData(angleData);
-                            } else if (initialization == 1) {
+                            if (initialization == 1) {
                                 setInitAngleData(angleData);
                             }
                             setCurrentAngleData(angleData);
@@ -92,24 +86,8 @@ public class SocketThread extends Thread{
     private void setInitAngleData(AngleData initAngleData){
         this.initAngleData = new AngleData(initAngleData);
     }
-    private void setResetAngleData(AngleData resetAngleData){
-        this.resetAngleData = new AngleData(resetAngleData);
-    }
     private void setCurrentAngleData(AngleData currentAngleData){
         this.currentAngleData = new AngleData(currentAngleData);
-    }
-    //public AngleData pollAngleData(){
-    //    return angleDataMessageQueue.poll();
-    //}
-    //public AngleData peekAngleData(){
-    //    return angleDataMessageQueue.peek();
-    //}
-
-    public void setMessageQueueListener(MessageQueueListenerInterface listener){
-        this.messageQueuelistener = listener;
-    }
-    public void removeMessageQueueListener(){
-        this.messageQueuelistener = null;
     }
 }
 

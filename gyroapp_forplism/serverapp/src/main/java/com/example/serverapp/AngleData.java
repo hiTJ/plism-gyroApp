@@ -26,20 +26,4 @@ public class AngleData implements Cloneable{
         this.initialize = angleData.initialize;
         this.deviceReset = angleData.deviceReset;
     }
-
-    //@Override
-    //public AngleData clone(){
-    //    AngleData angleData = null;
-
-    //    try {
-    //        angleData = (AngleData) super.clone();
-    //        angleData.pitchX = this.pitchX;
-    //        angleData.rollY = this.rollY;
-    //        angleData.azimuthZ = this.azimuthZ;
-    //    }catch(CloneNotSupportedException ex){
-    //        ex.printStackTrace();
-    //    }
-
-    //    return angleData;
-    //}
 }

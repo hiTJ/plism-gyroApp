@@ -1,39 +1,27 @@
 package com.example.serverapp;
 
-import android.content.Context;
 import android.util.Log;
-import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 
 import androidx.annotation.NonNull;
 
-import org.jetbrains.annotations.Contract;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
 public class BluetoothThread extends Thread{
-    private AngleDataMessageQueue angleDataMessageQueue;
+    private final AngleDataMessageQueue angleDataMessageQueue;
     private AngleData initializedAngleData;
     private boolean isRunning = false;
     private boolean isConnected = false;
-    private boolean needDeviceReset = false;
     public boolean isConnected(){return isConnected;}
     public boolean isRunning(){return isRunning;}
-    public void setNeedDeviceReset(boolean needDeviceReset){
-        this.needDeviceReset = needDeviceReset;
-    }
-    public boolean getNeedDeviceReset(){
-        return this.needDeviceReset;
-    }
-    private BluetoothAdapter bluetoothAdapter;
+    private final BluetoothAdapter bluetoothAdapter;
     private Set<BluetoothDevice> pairedDevices;
-    private String deviceName = "";
-    private BluetoothSerial bluetoothSerial;
+    private final BluetoothSerial bluetoothSerial;
     public BluetoothThread(AngleDataMessageQueue angleDataMessageQueue, BluetoothAdapter bluetoothAdapter){
         this.angleDataMessageQueue = angleDataMessageQueue;
         this.initializedAngleData = null;
@@ -45,7 +33,7 @@ public class BluetoothThread extends Thread{
         int init = 0;
         for(int i = 0; i < angleDataMessageQueue.size(); i++){
             result = angleDataMessageQueue.poll();
-            if(result.initialize == 1){
+            if(result != null && result.initialize == 1){
                 init = 1;
             }
         }
@@ -110,18 +98,14 @@ public class BluetoothThread extends Thread{
                 currentZ = currentZ + 180;
                 currentZ = currentZ < 0 ? currentZ + 360 : currentZ;
                 int initialization = angleData.initialize;
-                byte[] dataX = ByteBuffer.allocate(4).putInt(currentX).array();
-                byte[] dataZ = ByteBuffer.allocate(4).putInt(currentZ).array();
-                byte[] x = castBytesToWORD(dataX);
-                byte[] z = castBytesToWORD(dataZ);
-                String strx = "y" + String.valueOf(currentX) + " ";
-                String strz = "x" + String.valueOf(currentZ) + "\n";
-                byte[] sbytex = strx.getBytes();
-                byte[] sbytez = strz.getBytes();
-                this.bluetoothSerial.write(concat(sbytex, sbytez));
-                Log.d("debug", "X: " + String.valueOf(x));
-                Log.d("debug", "Z: " + String.valueOf(z));
-                Log.d("debug", "Init: " + String.valueOf(initialization));
+                String strY = "y" + currentX + " ";
+                String strX = "x" + currentZ + "\n";
+                byte[] sByteX = strY.getBytes();
+                byte[] sByteZ = strX.getBytes();
+                this.bluetoothSerial.write(concat(sByteX, sByteZ));
+                Log.d("debug", strY);
+                Log.d("debug", strX);
+                Log.d("debug", "Init: " + initialization);
             }
             try {
                 Thread.sleep(400);
@@ -131,23 +115,13 @@ public class BluetoothThread extends Thread{
         }
     }
     private void resetDevice() throws InterruptedException {
-        String strc = "c\n";
-        byte[] sbytec = strc.getBytes();
-        this.bluetoothSerial.write(sbytec);
+        String strC = "c\n";
+        byte[] sByteC = strC.getBytes();
+        this.bluetoothSerial.write(sByteC);
         Thread.sleep(2000);
     }
 
     //Utils
-    @NonNull
-    @Contract(pure = true)
-    private byte[] castBytesToWORD(byte[] bytes){
-        byte[] word = new byte[2];
-        for (int i = 0; i < word.length; i++)
-        {
-            word[word.length-i-1] = bytes[bytes.length-i-1];
-        }
-        return word;
-    }
     @NonNull
     public static byte[] concat(byte[]... arrays) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
