@@ -47,15 +47,20 @@ public class SocketThread extends Thread{
     private AngleData pollLatestAngleData(){
         AngleData latestAngleData = null;
         int initialize = 0;
+        int deviceReset = 0;
         while (angleDataMessageQueue.size() != 0) {
             AngleData angleData = angleDataMessageQueue.poll();
             if(angleData.initialize == 1){
                 initialize = 1;
             }
+            if(angleData.deviceReset == 1){
+                deviceReset = 1;
+            }
             latestAngleData = angleData;
         }
-        if(latestAngleData != null && initialize == 1){
-            latestAngleData.initialize = 1;
+        if(latestAngleData != null){
+            latestAngleData.initialize = initialize;
+            latestAngleData.deviceReset = deviceReset;
         }
         return latestAngleData;
     }
@@ -94,6 +99,7 @@ public class SocketThread extends Thread{
                     byte[] dataY = ByteBuffer.allocate(4).putInt(angleData.rollY).array();
                     byte[] dataZ = ByteBuffer.allocate(4).putInt(angleData.azimuthZ).array();
                     byte initialize = (byte)(angleData.initialize);
+                    byte deviceReset = (byte)(angleData.deviceReset);
                     //byte dataX = (byte)((int)angleData.pitchX);
                     //byte dataY = (byte)((int)angleData.rollY);
                     //byte dataZ = (byte)((int)angleData.azimuthZ);
@@ -106,6 +112,7 @@ public class SocketThread extends Thread{
                     outputStream.write(y);
                     outputStream.write(z);
                     outputStream.write(initialize);
+                    outputStream.write(deviceReset);
                     byte[] data = outputStream.toByteArray();
                     // ByteBufferを通ってデータサイズをbyteタイプに変換する。
                     ByteBuffer b = ByteBuffer.allocate(4);

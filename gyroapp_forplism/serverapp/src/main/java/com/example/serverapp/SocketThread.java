@@ -13,6 +13,7 @@ import java.nio.ByteOrder;
 public class SocketThread extends Thread{
     private AngleDataMessageQueue angleDataMessageQueue;
     private AngleData initAngleData;
+    private AngleData resetAngleData;
     private AngleData currentAngleData;
     private boolean isRunning = false;
     private boolean isConnected = false;
@@ -21,6 +22,7 @@ public class SocketThread extends Thread{
         this.angleDataMessageQueue = angleDataMessageQueue;
         this.initAngleData = initAngleData;
         this.currentAngleData = currentAngleData;
+        this.resetAngleData = new AngleData(0,0,0,0,0,0);
     }
     public AngleData getInitAngleData(){return initAngleData;}
     public AngleData getCurrentAngleData(){return currentAngleData;}
@@ -64,8 +66,11 @@ public class SocketThread extends Thread{
                             int pitchY = data[3] * 0x100 + (data[4] & 0xFF);
                             int azimuthZ = data[5] * 0x100 + (data[6] & 0xFF);
                             int initialization = data[7];
-                            AngleData angleData = new AngleData(direction, rollX, pitchY, azimuthZ, initialization);
-                            if (initialization == 1) {
+                            int resetDevice = data[8];
+                            AngleData angleData = new AngleData(direction, rollX, pitchY, azimuthZ, initialization, resetDevice);
+                            if(resetDevice == 1) {
+                                setResetAngleData(angleData);
+                            } else if (initialization == 1) {
                                 setInitAngleData(angleData);
                             }
                             setCurrentAngleData(angleData);
@@ -86,6 +91,9 @@ public class SocketThread extends Thread{
     }
     private void setInitAngleData(AngleData initAngleData){
         this.initAngleData = new AngleData(initAngleData);
+    }
+    private void setResetAngleData(AngleData resetAngleData){
+        this.resetAngleData = new AngleData(resetAngleData);
     }
     private void setCurrentAngleData(AngleData currentAngleData){
         this.currentAngleData = new AngleData(currentAngleData);

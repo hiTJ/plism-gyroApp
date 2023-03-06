@@ -21,8 +21,8 @@ public class AngleCalculator {
 
     public AngleCalculator(){
         angleDataList = new ArrayList<AngleData>();
-        currentAngleData = new AngleData(0,0,0,0,0);
-        initializedAngleData = new AngleData(0,0,0,0,0);
+        currentAngleData = new AngleData(0,0,0,0,0,0);
+        initializedAngleData = new AngleData(0,0,0,0,0,0);
     }
     public  AngleData getCurrentAngleData(){
         return this.currentAngleData;
@@ -49,7 +49,7 @@ public class AngleCalculator {
         x = x / dataSize;
         y = y / dataSize;
         z = z / dataSize;
-        return new AngleData(0, x, y, z, 0);
+        return new AngleData(0, x, y, z, 0,0);
     }
     
     public void calcAngle() {

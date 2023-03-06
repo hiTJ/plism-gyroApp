@@ -7,21 +7,24 @@ public class AngleData implements Cloneable{
     int pitchX;
     int rollY;
     int azimuthZ;
-    int initialization;
+    int initialize;
+    int deviceReset;
 
-    public AngleData(int direction, float pitchX, float rollY, float azimuthZ, int initialization){
+    public AngleData(int direction, float pitchX, float rollY, float azimuthZ, int initialize, int deviceReset){
         this.direction = direction;
         this.pitchX = (int)pitchX;
         this.rollY = (int)rollY;
         this.azimuthZ = (int)azimuthZ;
-        this.initialization = initialization;
+        this.initialize = initialize;
+        this.deviceReset = deviceReset;
     }
     public AngleData(@NonNull AngleData angleData){
         this.direction = angleData.direction;
         this.pitchX = angleData.pitchX;
         this.rollY = angleData.rollY;
         this.azimuthZ = angleData.azimuthZ;
-        this.initialization = angleData.initialization;
+        this.initialize = angleData.initialize;
+        this.deviceReset = angleData.deviceReset;
     }
 
     //@Override
