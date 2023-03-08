@@ -17,6 +17,8 @@ public class BluetoothThread extends Thread{
     private AngleData initializedAngleData;
     private boolean isRunning = false;
     private boolean isConnected = false;
+    private int dx = 0;
+    public int getDx(){return this.dx;}
     public boolean isConnected(){return isConnected;}
     public boolean isRunning(){return isRunning;}
     private final BluetoothAdapter bluetoothAdapter;
@@ -63,7 +65,6 @@ public class BluetoothThread extends Thread{
         //Bluetoothのメインループ
         while(true){
             if(!isConnected){
-                isRunning = false;
                 connect2Stand();
             }else{
                 AngleData angleData = pollAngleData();
@@ -95,6 +96,7 @@ public class BluetoothThread extends Thread{
                 if(currentX < 0){
                     currentX = 0;
                 }
+                this.dx = currentX;
                 currentZ = currentZ < 0 ? currentZ + 360 : currentZ;
                 int initialization = angleData.initialize;
                 String strY = "y" + currentX + " ";

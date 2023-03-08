@@ -72,9 +72,21 @@ public class MainActivity extends Activity {
                                     textInit.setText("INIT: " + initialAngleData.pitchX + ", " + initialAngleData.azimuthZ);
                                     if(currentAngleData != null){
                                         int pitchX = currentAngleData.pitchX - initialAngleData.pitchX + 60;
+                                        if(pitchX > 119){
+                                            pitchX = 119;
+                                        }
+                                        if(pitchX < 0){
+                                            pitchX = 0;
+                                        }
                                         int azimuthZ = currentAngleData.azimuthZ - initialAngleData.azimuthZ;
+                                        if(azimuthZ < 0){
+                                            azimuthZ = azimuthZ + 360;
+                                        }
                                         textCurrent.setText("CURRENT: " + currentAngleData.pitchX + ", " + currentAngleData.azimuthZ);
                                         textDelta.setText("DELTA: " + pitchX + ", " + azimuthZ);
+                                        if(bThread != null && bThread.isConnected()){
+                                            textDelta.setText("DELTA_B: " + bThread.getDx() + ", " + azimuthZ);
+                                        }
                                     }
                                 }
                                 if(sThread.isConnected())

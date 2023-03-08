@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Contract;
 import java.util.ArrayList;
 
 public class AngleCalculator {
-    private static final int MAXSIZE_ANGLE_DATA = 1;
+    private static final int MAXSIZE_ANGLE_DATA = 20;
     private static final int MATRIX_SIZE = 16;
     private static final int DIMENSION = 3;
     private ArrayList<AngleData> angleDataList;
@@ -37,8 +37,8 @@ public class AngleCalculator {
 
     private float radianToDegrees(float angrad) {
         double deg = Math.toDegrees(angrad);
-        //return  (float)Math.round(deg);
-        return  (float)Math.floor(angrad >= 0 ? deg : 360 + deg);
+        return  (float)Math.round(deg);
+        //return  (float)Math.floor(angrad >= 0 ? deg : 360 + deg);
     }
 
     public void setAccelerometer(float[] values){
@@ -49,21 +49,53 @@ public class AngleCalculator {
         this.magneticValues = values;
     }
 
+    private float calcAverageNum(float p, float n, int pSize, int nSize){
+        if(pSize > 0){
+            p = p / pSize;
+        }
+        if(nSize > 0){
+            n = n / nSize;
+        }
+        return p + n;
+    }
     @NonNull
     @Contract(" -> new")
     private AngleData getAverageAngleData(){
         float x = 0, y = 0, z = 0;
+        float px = 0, py = 0, pz = 0;
+        float nx = 0, ny = 0, nz = 0;
 
         int dataSize = this.angleDataList.size();
+        int pxNumSize = 0, pyNumSize = 0, pzNumSize = 0;
+        int nxNumSize = 0, nyNumSize = 0, nzNumSize = 0;
         for(int i = 0; i < dataSize; i++){
             AngleData data = angleDataList.get(i);
-            x = x + data.pitchX;
-            y = y + data.rollY;
-            z = z + data.azimuthZ;
+            if(data.pitchX >= 0){
+                px = px + data.pitchX;
+                pxNumSize++;
+            }else{
+                nx = nx + data.pitchX;
+                nxNumSize++;
+            }
+            if(data.rollY >= 0){
+                py = py + data.rollY;
+                pyNumSize++;
+            }else{
+                ny = ny + data.rollY;
+                nyNumSize++;
+            }
+            if(data.azimuthZ >= 0){
+                pz = pz + data.azimuthZ;
+                pzNumSize++;
+            }else{
+                nz = nz + data.azimuthZ;
+                nzNumSize++;
+            }
         }
-        x = x / dataSize;
-        y = y / dataSize;
-        z = z / dataSize;
+        x = calcAverageNum(px, nx, pxNumSize, nxNumSize);
+        y = calcAverageNum(py, ny, pyNumSize, nyNumSize);
+        z = calcAverageNum(pz, nz, pzNumSize, nzNumSize);
+
         return new AngleData(0, x, y, z, 0, 0);
     }
     
@@ -82,7 +114,7 @@ public class AngleCalculator {
             float pitchX = radianToDegrees(orientationValues[1]);
             float rollY = radianToDegrees(orientationValues[2]);
             AngleData angleData = new AngleData(0, pitchX, rollY, azimuthZ,0, 0);
-            if (angleDataList.size() >= MAXSIZE_ANGLE_DATA) {
+            while (angleDataList.size() >= MAXSIZE_ANGLE_DATA) {
                 angleDataList.remove(0);
             }
             angleDataList.add(angleData);
