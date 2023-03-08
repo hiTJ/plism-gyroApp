@@ -67,6 +67,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     sThread.setHost(ip, 10000);
                     sThread.start();
                 }
+                int i = 0;
+                for(; i < 4 && sThread != null && !sThread.isConnected(); i++ ){
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(i == 4){
+                    return;
+                }
                 startButton.setEnabled(true);
                 disconnectButton.setEnabled(true);
                 connectButton.setEnabled(false);
@@ -114,6 +125,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     disconnectButton.setEnabled(true);
                     initializeButton.setEnabled(false);
                     deviceResetButton.setEnabled(false);
+                }else{
+                    startButton.setEnabled(false);
+                    stopButton.setEnabled(false);
+                    disconnectButton.setEnabled(false);
+                    initializeButton.setEnabled(false);
+                    deviceResetButton.setEnabled(false);
+                    connectButton.setEnabled(true);
+                    sThread = null;
                 }
             }
         });
