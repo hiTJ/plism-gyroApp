@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Contract;
 import java.util.ArrayList;
 
 public class AngleCalculator {
-    private static final int MAXSIZE_ANGLE_DATA = 10;
+    private static final int MAXSIZE_ANGLE_DATA = 1;
     private static final int MATRIX_SIZE = 16;
     private static final int DIMENSION = 3;
     private ArrayList<AngleData> angleDataList;
@@ -37,8 +37,8 @@ public class AngleCalculator {
 
     private float radianToDegrees(float angrad) {
         double deg = Math.toDegrees(angrad);
-        return  (float)Math.round(deg);
-        //return  (float)Math.floor(angrad >= 0 ? deg : 360 + deg);
+        //return  (float)Math.round(deg);
+        return  (float)Math.floor(angrad >= 0 ? deg : 360 + deg);
     }
 
     public void setAccelerometer(float[] values){
