@@ -68,14 +68,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     sThread.start();
                 }
                 int i = 0;
-                for(; i < 4 && sThread != null && !sThread.isConnected(); i++ ){
+                for(; i < 10 && sThread != null && !sThread.isConnected(); i++ ){
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                if(i == 4){
+                if(i == 10){
+                    sThread = null;
                     return;
                 }
                 startButton.setEnabled(true);
