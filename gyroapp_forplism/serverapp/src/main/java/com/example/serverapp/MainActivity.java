@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
                                 if(initialAngleData != null){
                                     textInit.setText("INIT: " + initialAngleData.pitchX + ", " + initialAngleData.azimuthZ);
                                     if(currentAngleData != null){
-                                        int pitchX = initialAngleData.pitchX - currentAngleData.pitchX;
+                                        int pitchX = currentAngleData.pitchX - initialAngleData.pitchX + 60;
                                         int azimuthZ = currentAngleData.azimuthZ - initialAngleData.azimuthZ;
                                         textCurrent.setText("CURRENT: " + currentAngleData.pitchX + ", " + currentAngleData.azimuthZ);
                                         textDelta.setText("DELTA: " + pitchX + ", " + azimuthZ);

@@ -85,7 +85,7 @@ public class BluetoothThread extends Thread{
                     continue;
                 }
                 //下方向が正にで通知されているので、反転させる
-                int currentX = this.initializedAngleData.pitchX - angleData.pitchX;
+                int currentX =  angleData.pitchX - this.initializedAngleData.pitchX;
                 //右方向が正にで通知されているので、init時の値をそのままマイナスする
                 int currentZ =  angleData.azimuthZ - this.initializedAngleData.azimuthZ;
                 currentX = currentX + 60;
@@ -95,7 +95,6 @@ public class BluetoothThread extends Thread{
                 if(currentX < 0){
                     currentX = 0;
                 }
-                currentZ = currentZ + 180;
                 currentZ = currentZ < 0 ? currentZ + 360 : currentZ;
                 int initialization = angleData.initialize;
                 String strY = "y" + currentX + " ";
@@ -107,18 +106,18 @@ public class BluetoothThread extends Thread{
                 Log.d("debug", strX);
                 Log.d("debug", "Init: " + initialization);
             }
-            try {
-                Thread.sleep(400);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            //try {
+            //    Thread.sleep(100);
+            //} catch (InterruptedException e) {
+            //    e.printStackTrace();
+            //}
         }
     }
     private void resetDevice() throws InterruptedException {
         String strC = "c\n";
         byte[] sByteC = strC.getBytes();
         this.bluetoothSerial.write(sByteC);
-        Thread.sleep(2000);
+        Thread.sleep(3000);
     }
 
     //Utils
