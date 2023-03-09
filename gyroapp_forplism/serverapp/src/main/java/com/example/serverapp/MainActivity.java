@@ -17,7 +17,8 @@ public class MainActivity extends Activity {
     private AngleDataMessageQueue angleDataMessageQueue;
     private BluetoothAdapter bluetoothAdapter;
     private TextView textInit, textCurrent, textDelta, sTextStatus, bTextStatus;
-    SocketThread sThread;
+    //SocketThread sThread;
+    SocketThreadUDP sThread;
     BluetoothThread bThread;
     Thread drawThread;
     AngleData currentAngleData;
@@ -91,7 +92,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        sThread = new SocketThread(this.angleDataMessageQueue, this.initialAngleData, this.currentAngleData);
+        sThread = new SocketThreadUDP(this.angleDataMessageQueue, this.initialAngleData, this.currentAngleData);
         sThread.start();
         bThread = new BluetoothThread(angleDataMessageQueue, bluetoothAdapter);
         bThread.start();

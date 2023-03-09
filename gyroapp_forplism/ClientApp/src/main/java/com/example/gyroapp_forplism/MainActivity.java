@@ -21,7 +21,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private SensorManager sensorManager;
     private TextView textView, textInfo, textIp;
     private AngleDataMessageQueue angleDataMessageQueue;
-    SocketThread sThread;
+    SocketThreadUDP sThread;
+    //SocketThread sThread;
     private AngleCalculator angleCalculator;
     private boolean needInitialize = false, needResetDevice = false;
 
@@ -63,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     return;
                 }
                 if(sThread == null){
-                    sThread = new SocketThread(angleDataMessageQueue);
+                    sThread = new SocketThreadUDP(angleDataMessageQueue);
                     sThread.setHost(ip, 10000);
                     sThread.start();
                 }
