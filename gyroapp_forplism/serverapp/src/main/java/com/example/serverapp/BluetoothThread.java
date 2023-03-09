@@ -89,6 +89,7 @@ public class BluetoothThread extends Thread{
                     Log.d("debug", "Reset Device!!");
                     try {
                         resetDevice();
+                        this.initializedAngleData = angleData;
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -131,16 +132,14 @@ public class BluetoothThread extends Thread{
         }
     }
     private void resetDevice() throws InterruptedException {
+        String strX = "x0\n";
+        byte[] sByteZ = strX.getBytes();
+        this.bluetoothSerial.write(sByteZ);
+        Thread.sleep(3000);
         String strC = "c\n";
         byte[] sByteC = strC.getBytes();
         this.bluetoothSerial.write(sByteC);
         Thread.sleep(3000);
-        //String strY = "y60 ";
-        //String strX = "x0\n";
-        //byte[] sByteX = strY.getBytes();
-        //byte[] sByteZ = strX.getBytes();
-        //this.bluetoothSerial.write(concat(sByteX, sByteZ));
-        //Thread.sleep(1000);
     }
 
     //Utils
