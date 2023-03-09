@@ -124,17 +124,17 @@ public class SocketThread extends Thread{
                     // データ送信
                     sender.write(data);
 
-                    data = new byte[4];
-                    // データを長さを受信
-                    receiver.read(data, 0, 4);
-                    // ByteBufferを通ってlittleエンディアンで変換してデータサイズを受け取る。
-                    ByteBuffer bb = ByteBuffer.wrap(data);
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
-                    int length = bb.getInt();
-                    // データサイズほど、バッファーを設定する。
-                    data = new byte[length];
-                    // データを受け取る。
-                    receiver.read(data, 0, length);
+                    //data = new byte[4];
+                    //// データを長さを受信
+                    //receiver.read(data, 0, 4);
+                    //// ByteBufferを通ってlittleエンディアンで変換してデータサイズを受け取る。
+                    //ByteBuffer bb = ByteBuffer.wrap(data);
+                    //bb.order(ByteOrder.LITTLE_ENDIAN);
+                    //int length = bb.getInt();
+                    //// データサイズほど、バッファーを設定する。
+                    //data = new byte[length];
+                    //// データを受け取る。
+                    //receiver.read(data, 0, length);
                 }
             }
         } catch (Throwable e) {

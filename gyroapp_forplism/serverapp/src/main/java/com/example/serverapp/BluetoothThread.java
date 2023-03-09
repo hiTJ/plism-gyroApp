@@ -135,11 +135,11 @@ public class BluetoothThread extends Thread{
         String strX = "x0\n";
         byte[] sByteZ = strX.getBytes();
         this.bluetoothSerial.write(sByteZ);
-        Thread.sleep(3000);
+        Thread.sleep(5000);
         String strC = "c\n";
         byte[] sByteC = strC.getBytes();
         this.bluetoothSerial.write(sByteC);
-        Thread.sleep(3000);
+        Thread.sleep(5000);
     }
 
     //Utils
