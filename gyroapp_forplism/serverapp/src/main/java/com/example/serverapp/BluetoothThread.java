@@ -17,9 +17,16 @@ public class BluetoothThread extends Thread{
     private AngleData initializedAngleData;
     private boolean isRunning = false;
     private boolean isConnected = false;
+    private boolean isAllowedConnect = false;
     private int dx = 0;
+    private int dy = 0;
     public int getDx(){return this.dx;}
+    public int getDy(){return this.dy;}
     public boolean isConnected(){return isConnected;}
+    public boolean isAllowedConnect(){return isAllowedConnect;}
+    public void setAllowedConnectStatus(boolean isAllowed){
+        this.isAllowedConnect = isAllowed;
+    }
     public boolean isRunning(){return isRunning;}
     private final BluetoothAdapter bluetoothAdapter;
     private Set<BluetoothDevice> pairedDevices;
@@ -47,19 +54,21 @@ public class BluetoothThread extends Thread{
     }
 
     private void connect2Stand(){
-        try {
-            this.bluetoothSerial.connectToDevice("94:E6:86:12:14:D2");
-            while (!this.bluetoothSerial.isConnected()) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        if(isAllowedConnect) {
+            try {
+                this.bluetoothSerial.connectToDevice("94:E6:86:12:14:D2");
+                while (!this.bluetoothSerial.isConnected()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
-        }catch (Exception ex){
-            ex.printStackTrace();
+            this.isConnected = true;
         }
-        this.isConnected = true;
     }
     public void run(){
         //Bluetoothのメインループ
@@ -67,6 +76,11 @@ public class BluetoothThread extends Thread{
             if(!isConnected){
                 connect2Stand();
             }else{
+                if(!isAllowedConnect){
+                    this.bluetoothSerial.disconnect();
+                    this.isConnected = false;
+                    continue;
+                }
                 AngleData angleData = pollAngleData();
                 if(angleData == null){
                     continue;
@@ -96,8 +110,9 @@ public class BluetoothThread extends Thread{
                 if(currentX < 0){
                     currentX = 0;
                 }
-                this.dx = currentX;
+                this.dy = currentX;
                 currentZ = currentZ < 0 ? currentZ + 360 : currentZ;
+                this.dx = currentZ;
                 int initialization = angleData.initialize;
                 String strY = "y" + currentX + " ";
                 String strX = "x" + currentZ + "\n";
@@ -120,6 +135,12 @@ public class BluetoothThread extends Thread{
         byte[] sByteC = strC.getBytes();
         this.bluetoothSerial.write(sByteC);
         Thread.sleep(3000);
+        //String strY = "y60 ";
+        //String strX = "x0\n";
+        //byte[] sByteX = strY.getBytes();
+        //byte[] sByteZ = strX.getBytes();
+        //this.bluetoothSerial.write(concat(sByteX, sByteZ));
+        //Thread.sleep(1000);
     }
 
     //Utils

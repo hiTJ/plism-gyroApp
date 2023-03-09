@@ -37,19 +37,63 @@
         android:textSize="20sp" />
 
     <TextView
-        android:id="@+id/connectionStatusView"
+        android:id="@+id/bConnectionStatusLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="0dp"
+        android:text="Bluetooth Connection Status"
+        android:textColor="#000"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/bConnectionStatusView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="00dp"
+        android:text="NOT CONNECTED"
         android:textColor="#00f"
-        android:textSize="20sp"
-        android:text="NOT CONNECTED" />
+        android:textSize="20sp" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/bConnectButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Button" />
+        android:text="Connect to Stand" />
+
+    <Button
+        android:id="@+id/bDisConnectButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Disconnect from Stand" />
+
+    <TextView
+        android:id="@+id/sConnectionStatusLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="0dp"
+        android:text="Socket Connection Status"
+        android:textColor="#000"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/sConnectionStatusView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="0dp"
+        android:text="NOT CONNECTED"
+        android:textColor="#00f"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/sDisConnectButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Disconnect Socket" />
 
 </LinearLayout>
