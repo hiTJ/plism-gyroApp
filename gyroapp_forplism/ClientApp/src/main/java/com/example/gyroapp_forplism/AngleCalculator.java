@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Contract;
 import java.util.ArrayList;
 
 public class AngleCalculator {
-    private static final int MAXSIZE_ANGLE_DATA = 20;
+    private static final int MAXSIZE_ANGLE_DATA = 10;
     private static final int MATRIX_SIZE = 16;
     private static final int DIMENSION = 3;
     private ArrayList<AngleData> angleDataList;
@@ -56,12 +56,24 @@ public class AngleCalculator {
         if(nSize > 0){
             n = n / nSize;
         }
+        if(nSize > 0 && pSize > 0){
+            if(n < -90 && p > 90) {
+                float x = p + n;
+                if (x > 0) {
+                    x = x - 180;
+                } else {
+                    x = x + 180;
+                }
+                return x / 2;
+            }
+            return (p + n) / 2;
+        }
         return p + n;
     }
+
     @NonNull
     @Contract(" -> new")
     private AngleData getAverageAngleData(){
-        float x = 0, y = 0, z = 0;
         float px = 0, py = 0, pz = 0;
         float nx = 0, ny = 0, nz = 0;
 
@@ -92,12 +104,53 @@ public class AngleCalculator {
                 nzNumSize++;
             }
         }
+        float x = 0, y = 0, z = 0;
         x = calcAverageNum(px, nx, pxNumSize, nxNumSize);
         y = calcAverageNum(py, ny, pyNumSize, nyNumSize);
         z = calcAverageNum(pz, nz, pzNumSize, nzNumSize);
 
         return new AngleData(0, x, y, z, 0, 0);
     }
+    //@NonNull
+    //@Contract(" -> new")
+    //private AngleData getAverageAngleData(){
+    //    float x = 0, y = 0, z = 0;
+    //    float px = 0, py = 0, pz = 0;
+    //    float nx = 0, ny = 0, nz = 0;
+
+    //    int dataSize = this.angleDataList.size();
+    //    int pxNumSize = 0, pyNumSize = 0, pzNumSize = 0;
+    //    int nxNumSize = 0, nyNumSize = 0, nzNumSize = 0;
+    //    for(int i = 0; i < dataSize; i++){
+    //        AngleData data = angleDataList.get(i);
+    //        if(data.pitchX >= 0){
+    //            px = px + data.pitchX;
+    //            pxNumSize++;
+    //        }else{
+    //            nx = nx + data.pitchX;
+    //            nxNumSize++;
+    //        }
+    //        if(data.rollY >= 0){
+    //            py = py + data.rollY;
+    //            pyNumSize++;
+    //        }else{
+    //            ny = ny + data.rollY;
+    //            nyNumSize++;
+    //        }
+    //        if(data.azimuthZ >= 0){
+    //            pz = pz + data.azimuthZ;
+    //            pzNumSize++;
+    //        }else{
+    //            nz = nz + data.azimuthZ;
+    //            nzNumSize++;
+    //        }
+    //    }
+    //    x = calcAverageNum(px, nx, pxNumSize, nxNumSize);
+    //    y = calcAverageNum(py, ny, pyNumSize, nyNumSize);
+    //    z = calcAverageNum(pz, nz, pzNumSize, nzNumSize);
+
+    //    return new AngleData(0, x, y, z, 0, 0);
+    //}
     
     public void calcAngle(boolean needInitialize, boolean needResetDevice) {
         if (this.magneticValues != null && this.accelerometerValues != null) {

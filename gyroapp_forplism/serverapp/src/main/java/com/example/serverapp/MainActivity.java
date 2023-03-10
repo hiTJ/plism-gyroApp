@@ -49,49 +49,6 @@ public class MainActivity extends Activity {
 
         this.angleDataMessageQueue = new AngleDataMessageQueue();
 
-        //sThread = new SocketThread(this.angleDataMessageQueue, this.initialAngleData, this.currentAngleData);
-        //sThread.start();
-        //bThread = new BluetoothThread(this.angleDataMessageQueue, this.bluetoothAdapter);
-        //bThread.start();
-        bConnectButton = this.findViewById(R.id.bConnectButton);
-        bDisConnectButton = this.findViewById(R.id.bDisConnectButton);
-        sDisConnectButton = this.findViewById(R.id.sDisConnectButton);
-
-        textCurrent = findViewById(R.id.text_current);
-        textDelta = findViewById(R.id.text_delta);
-
-        // Get an instance of the TextView
-        textInit = findViewById(R.id.text_init);
-        textDelta = findViewById(R.id.text_delta);
-        sTextStatus = findViewById(R.id.sConnectionStatusView);
-        bTextStatus = findViewById(R.id.bConnectionStatusView);
-
-        sDisConnectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
-
-        bConnectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                bThread.setAllowedConnectStatus(true);
-            }
-        });
-
-        bDisConnectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                bThread.setAllowedConnectStatus(false);
-            }
-        });
-    }
-
-    //　バックグラウンドから復帰時に呼び出される
-    @Override
-    protected void onResume() {
-        super.onResume();
         sThread = new SocketThreadUDP(this.angleDataMessageQueue, this.initialAngleData, this.currentAngleData);
         sThread.start();
         bThread = new BluetoothThread(angleDataMessageQueue, bluetoothAdapter);
@@ -160,6 +117,45 @@ public class MainActivity extends Activity {
             }
         });
         drawThread.start();
+        bConnectButton = this.findViewById(R.id.bConnectButton);
+        bDisConnectButton = this.findViewById(R.id.bDisConnectButton);
+        sDisConnectButton = this.findViewById(R.id.sDisConnectButton);
+
+        textCurrent = findViewById(R.id.text_current);
+        textDelta = findViewById(R.id.text_delta);
+
+        // Get an instance of the TextView
+        textInit = findViewById(R.id.text_init);
+        textDelta = findViewById(R.id.text_delta);
+        sTextStatus = findViewById(R.id.sConnectionStatusView);
+        bTextStatus = findViewById(R.id.bConnectionStatusView);
+
+        sDisConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
+        bConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bThread.setAllowedConnectStatus(true);
+            }
+        });
+
+        bDisConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bThread.setAllowedConnectStatus(false);
+            }
+        });
+    }
+
+    //　バックグラウンドから復帰時に呼び出される
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     // バックグラウンド時に呼び出される
